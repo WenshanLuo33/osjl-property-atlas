@@ -1,43 +1,110 @@
-# OSJL Property Atlas — Three-Tab Update
+# Ocean State Job Lot | Property Atlas
 
-本次更新只修改网页源码，不修改你的 CSV、照片或 Site Plan 文件。
+An interactive web-based research platform developed to analyze the retail locations, real estate portfolio, and property redevelopment strategies of **Ocean State Job Lot (OSJL)**, a discount retail chain operating across the Northeast and Mid-Atlantic United States.
 
-## 放置方法
+The project examines OSJL's geographic distribution, property ownership and leasing strategies, retail center typologies, and physical changes to commercial properties over time.
 
-1. 解压 `OSJL_Website_Three_Tabs_Update.zip`。
-2. 把里面的 `index.html`、`app.js`、`styles.css` 复制到现有 `M41020-OSJL` 文件夹，**覆盖这三个旧文件**。
-3. 不要替换 `DATA`、`PICTURE`、`PLAN` 或 `START_WEBSITE.bat`。
-4. 用原来的 `START_WEBSITE.bat` 打开网页，在浏览器按 **Ctrl + F5** 强制刷新。
+## Research Objectives
 
-目录结构示例：
+The research focuses on three primary questions:
+
+1. **Where does OSJL operate and invest?** Map OSJL retail stores and real estate holdings across the region.
+2. **What types of retail properties are involved?** Classify properties by ownership structure and spatial layout.
+3. **How do properties change over time?** Compare tenant occupancy, storefront renovations, site improvements, and adaptive reuse before and after property acquisitions.
+
+## Website Features
+
+### 1. Property Map
+
+An interactive geographic overview of OSJL retail stores and real estate properties.
+
+- Maps 183 retail and property locations.
+- Color-codes locations by property ownership and occupancy type.
+- Displays property information through interactive map markers.
+- Supports location searches and ownership-based filtering.
+- Provides street map and satellite imagery views.
+- Links directly to Google Maps.
+
+### 2. Renovation Review
+
+A comparative analysis of physical changes to OSJL-related properties.
+
+- Separates properties with documented improvements from those with no observed improvements.
+- Displays property information, including store area, shopping center GLA, tenants, acquisition history, and ownership type.
+- Presents before-and-after photographs and available site plans.
+- Includes interactive satellite maps for each property.
+- Highlights changes such as tenant replacement, façade renovation, parking lot modifications, landscaping, and adaptive reuse.
+
+### 3. Ownership & Retail Typology
+
+A hierarchical exploration of OSJL properties based on ownership structure and retail center configuration.
+
+**Property Ownership & Occupancy Types**
+- Owned + OSJL Store
+- Owned + No OSJL Store
+- Leased OSJL Store
+- Ground / Master Leased Property
+
+**Retail Center Typologies**
+
+Properties are further categorized by their physical layouts, including standalone big-box buildings, multi-tenant big-box buildings, linear strip centers, L-shaped and U-shaped shopping centers, and multi-building clusters.
+
+Interactive property cards and satellite maps support visual comparisons across different categories.
+
+## Data & Methodology
+
+The platform draws on research compiled from:
+
+- OSJL official store listings and real estate publications
+- Commercial real estate listings and leasing brochures
+- Public acquisition announcements and property records
+- Google Maps and historical Street View imagery
+- Satellite imagery and available site plans
+- Manual site classification and before-and-after comparisons
+
+The website is **CSV-driven**, allowing property information, classifications, and renovation records to be updated without modifying the underlying website code.
+
+Research findings reflect the available sources and observations at the time of compilation. Historical acquisition records do not necessarily establish current ownership, and visible exterior changes do not capture all interior renovations.
+
+## Technology
+
+- HTML, CSS, and JavaScript
+- Leaflet.js for interactive mapping
+- OpenStreetMap and Esri satellite imagery
+- CSV-based data management
+
+## Project Structure
 
 ```text
-M41020-OSJL/
-  index.html                    ← 替换
-  app.js                        ← 替换
-  styles.css                    ← 替换
-  START_WEBSITE.bat            ← 保留
-  DATA/
-    OSJL_183_Stores_and_Owned_Properties_Updated.csv
-    OSJL_Property_Portfolio_With_Ownership_Types_2026-11-02(2).csv
-  PICTURE/                      ← 保留
-  PLAN/                         ← 保留
+osjl-property-atlas/
+├── index.html
+├── app.js
+├── styles.css
+├── DATA/
+│   ├── [Store Locations CSV]
+│   └── [Property Portfolio CSV]
+├── PICTURE/
+│   └── [Before and After Images]
+├── PLAN/
+│   └── [Site Plans]
+└── START_WEBSITE.bat
 ```
 
-如果你的两个 CSV 文件名不同，请在 `app.js` 顶部 `CONFIG` 的 `storeCSV` 和 `portfolioCSV` 中填写实际文件名。此前的 `HTTP 404` 表示路径或文件名不一致。
+## Running Locally
 
-## 更新内容
+1. Clone or download the repository.
+2. Ensure the required CSV files are located in the `DATA` folder.
+3. Start a local web server using `START_WEBSITE.bat` or VS Code Live Server.
+4. Open the website in your browser.
 
-1. **Property Map** — 弹窗及鼠标悬停不再展示 `Coordinate Source`，其余信息保留。
-2. **Renovation Review** — 项目卡片中卫星图放在 Before/After 和 Site Plan 的**后面**，Google Maps 链接的前面。如果没有图片或 Plan，自动跳过空白部分。
-3. **Ownership & Layout Types**（新增）— 只从 **Property Portfolio CSV** 获取项目；第一级按 `Property_Ownership_Type`，第二级按 `Retail_Center_Type`，每种类型下面是带可交互卫星地图的项目卡片。支持全文搜索、产权/类型筛选、分类分支跳转、展开/折叠。没有产权或类型分类时会分到 Unknown / Unclassified Layout。
+The application reads the CSV files locally and updates its visualizations as the datasets change.
 
-卫星图允许拖动、双击、触控缩放以及 `+ / −` 按钮缩放；为了避免浏览很长的页面时意外缩放，默认关闭鼠标滚轮缩放。项目地图只在滚动至附近时初始化，以降低浏览器内存占用。
+## Research Scope
 
-## 后续更新
+This platform is an evolving research resource rather than a definitive property ownership registry. Property classifications, historical redevelopment information, and acquisition records are continually refined as additional evidence becomes available.
 
-- 修改两个 CSV 并保存后，网页在打开状态下每 20 秒重新检查数据；也可点击右上角 **Refresh**。
-- 新增 `Property_Ownership_Type` 或 `Retail_Center_Type` 值后，第三页会自动产生相应分类，不需要改网页代码。
-- 图片仍按现有 `renovation before`、`renovation after`、`plans` 的路径读取，也支持之前的默认文件名规则。
+---
 
-注意：Leaflet 地图库和 Esri 卫星影像需要联网。属性分组和卡片来自用户的 CSV，不代表产权已由第三方重新核实。
+**Project:** Ocean State Job Lot Retail & Real Estate Research  
+**Organization:** Arrowstreet  
+**Focus:** Retail Planning · Commercial Real Estate · Site Typology · Adaptive Reuse
