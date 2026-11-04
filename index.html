@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d3d">
+  <title>OSJL | Retail Property Research</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="masthead">
+      <div class="brand-lockup">
+        <span class="brand-square" aria-hidden="true">O</span>
+        <div>
+          <div class="eyebrow">ARROWSTREET / RETAIL RESEARCH</div>
+          <h1>Ocean State Job Lot <span>Property Atlas</span></h1>
+        </div>
+      </div>
+      <div class="top-right">
+        <span class="live-indicator"><span class="live-dot"></span> CSV-linked</span>
+        <span id="updated-label" class="updated-label">Loading data…</span>
+        <button id="reload-button" class="reload-button" type="button" title="Reload both CSV files">↻ <span>Refresh</span></button>
+      </div>
+    </header>
+
+    <div class="tab-strip" role="tablist" aria-label="Research pages">
+      <button id="tab-map" class="tab active" role="tab" aria-selected="true" aria-controls="page-map" type="button" data-tab="map"><span class="tab-icon">◉</span> Property Map <span id="tab-map-count" class="tab-count">183</span></button>
+      <button id="tab-renovation" class="tab" role="tab" aria-selected="false" aria-controls="page-renovation" type="button" data-tab="renovation"><span class="tab-icon">▦</span> Renovation Review <span id="tab-reno-count" class="tab-count">—</span></button>
+      <button id="tab-taxonomy" class="tab" role="tab" aria-selected="false" aria-controls="page-taxonomy" type="button" data-tab="taxonomy"><span class="tab-icon">⑂</span> Ownership &amp; Layout Types <span id="tab-tax-count" class="tab-count">—</span></button>
+      <div class="tab-trailing">Northeast &amp; Mid-Atlantic · Portfolio research</div>
+    </div>
+
+    <main>
+      <div id="error-notice" class="error-notice" role="alert" hidden></div>
+      <section id="page-map" class="page page-map" role="tabpanel" aria-labelledby="tab-map">
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">01 / SPATIAL DISTRIBUTION</div>
+            <h2>Retail stores &amp; property portfolio</h2>
+            <p>All locations in the combined dataset. Hover over a point for property details; click for Google Maps.</p>
+          </div>
+          <div class="intro-number"><strong id="map-total">183</strong><span>LOCATIONS IN DATA</span></div>
+        </div>
+        <div class="map-workspace">
+          <aside class="map-sidebar">
+            <div class="sidebar-block">
+              <label class="control-label" for="map-search">Find a property</label>
+              <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="map-search" type="search" placeholder="City, address, tenant, store ID…" autocomplete="off"></div>
+              <label class="control-label select-label" for="map-owner-filter">Ownership / occupancy</label>
+              <select id="map-owner-filter"><option value="all">All property types</option></select>
+            </div>
+            <div class="sidebar-block legend-block">
+              <div class="sidebar-heading">OWNERSHIP TYPES</div>
+              <div id="ownership-legend" class="ownership-legend"></div>
+              <p class="legend-footnote">Unknown is shown separately; unverified ownership is not treated as owned.</p>
+            </div>
+            <div class="sidebar-block list-block">
+              <div class="sidebar-list-head"><span>LOCATIONS</span><span id="map-visible-count">—</span></div>
+              <div id="map-location-list" class="location-list"></div>
+            </div>
+          </aside>
+          <div class="map-stage">
+            <div id="map" aria-label="Map of OSJL stores and property locations"></div>
+            <div class="map-attribution-note">Select a marker to inspect property data · Street &amp; satellite basemaps</div>
+            <div id="map-fallback" class="map-fallback" hidden>Map library could not load. Connect to the internet and refresh this page.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-renovation" class="page page-renovation" role="tabpanel" aria-labelledby="tab-renovation" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">02 / BEFORE &amp; AFTER</div>
+            <h2>Renovation &amp; tenant change review</h2>
+            <p>Only properties with a filled <code>Renovation</code> cell are shown. Blank entries are excluded; results update from your CSV.</p>
+          </div>
+          <div class="intro-number"><strong id="reno-total">—</strong><span>CLASSIFIED PROPERTIES</span></div>
+        </div>
+        <div class="renovation-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="reno-search" type="search" placeholder="Search city, renovation, tenant, ID…" autocomplete="off"></div>
+          <select id="reno-owner-filter"><option value="all">All property types</option></select>
+          <span class="toolbar-hint">Image &amp; plan previews appear only when the files exist.</span>
+        </div>
+        <div class="renovation-grid">
+          <section class="renovation-column no-improvement-col" aria-labelledby="no-improvement-title">
+            <div class="column-heading">
+              <div><div class="eyebrow">NO VISIBLE IMPROVEMENT REPORTED</div><h3 id="no-improvement-title">No improvement</h3></div>
+              <span class="column-count" id="no-improvement-count">—</span>
+            </div>
+            <div class="column-description">Items explicitly marked “No improvement” in the portfolio CSV.</div>
+            <div id="cards-no-improvement" class="card-stack"></div>
+          </section>
+          <section class="renovation-column improvements-col" aria-labelledby="improvements-title">
+            <div class="column-heading">
+              <div><div class="eyebrow">DOCUMENTED / OBSERVED CHANGES</div><h3 id="improvements-title">With improvement</h3></div>
+              <span class="column-count" id="improvements-count">—</span>
+            </div>
+            <div class="column-description">Tenant changes, façade work, site improvements, or other renovation notes.</div>
+            <div id="cards-improvement" class="card-stack"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="page-taxonomy" class="page page-taxonomy" role="tabpanel" aria-labelledby="tab-taxonomy" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">03 / PORTFOLIO TAXONOMY</div>
+            <h2>Ownership → Retail center layout</h2>
+            <p>Explore the property portfolio as a two-level research tree. Ownership categories branch into site plan typologies, then individual properties with interactive satellite views.</p>
+          </div>
+          <div class="intro-number"><strong id="tax-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+        </div>
+        <div class="taxonomy-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="tax-search" type="search" placeholder="Search property, address, tenant, layout…" autocomplete="off"></div>
+          <select id="tax-owner-filter" aria-label="Filter by ownership"><option value="all">All ownership types</option></select>
+          <select id="tax-layout-filter" aria-label="Filter by retail center type"><option value="all">All layout types</option></select>
+          <div class="tax-toolbar-actions"><button type="button" id="tax-expand">Expand all</button><button type="button" id="tax-collapse">Collapse all</button></div>
+        </div>
+        <div class="taxonomy-overview" aria-label="Interactive classification hierarchy">
+          <div class="tax-overview-header"><span class="tree-kicker">CLASSIFICATION TREE</span><span class="tree-note">Click a branch to jump to its property cards</span></div>
+          <div id="taxonomy-tree" class="tax-tree-root"></div>
+        </div>
+        <div class="taxonomy-section-head"><div class="section-kicker">PROPERTY COLLECTIONS</div><span id="tax-visible-count" class="tax-visible-count"></span></div>
+        <div id="taxonomy-results" class="taxonomy-results"></div>
+      </section>
+    </main>
+    <footer class="footer">OSJL Property Atlas <span>·</span> Data remains in your local CSV files <span>·</span> Historical ownership classifications may require deed verification</footer>
+  </div>
+  <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image preview"><button id="lightbox-close" class="lightbox-close" type="button" aria-label="Close preview">×</button><img id="lightbox-img" alt="Enlarged property image"><div id="lightbox-caption" class="lightbox-caption"></div></div>
+</body>
+</html>
