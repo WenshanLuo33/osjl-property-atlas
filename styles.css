@@ -93,3 +93,223 @@
 .tax-jump-focus{outline:2px solid #6bb7a0;outline-offset:-2px;transition:outline-color .7s}
 @media (max-width:1050px){.tree-branches{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.taxonomy-toolbar .input-icon-wrap,.taxonomy-toolbar select{flex:1 1 100%;width:100%}.tax-toolbar-actions{margin-left:0}.tree-branches{grid-template-columns:1fr}.taxonomy-overview{padding:19px 16px}.tree-note{display:none}.taxonomy-layout-list{padding:12px 10px 16px}.taxonomy-card-grid{padding:10px}.taxonomy-owner-heading{padding:15px}.taxonomy-satellite .card-satellite-map{height:240px}}
+
+/* ==============================================================
+   2026-11: selectable ownership legend + owned scope colors
+   ============================================================== */
+.tab-strip{overflow-x:auto;scrollbar-width:thin;gap:20px}
+.tab{flex:0 0 auto;white-space:nowrap}
+.map-filter-tip{font-size:10.5px;color:#80938e;line-height:1.55;margin:12px 0 0}
+.legend-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.legend-actions{display:flex;gap:6px}
+.legend-actions button{border:0;background:#eff5f2;border-radius:5px;padding:4px 7px;color:#427367;font-size:10px;font-weight:750}
+.legend-actions button:hover{background:#d9ece3}
+.ownership-legend{gap:7px}
+.legend-item{grid-template-columns:16px 12px 1fr auto;gap:8px;cursor:pointer;padding:6px 5px;border-radius:7px;font-size:11px;line-height:1.3}
+.legend-item:hover{background:#f2f7f4}
+.legend-item.unchecked{opacity:.54}
+.legend-item input{width:14px;height:14px;margin:0;accent-color:#276f56;cursor:pointer}
+.legend-diamond{border-radius:2px;transform:rotate(45deg)}
+.scope-legend{border-top:1px solid #ecf0ed;margin-top:12px;padding-top:12px;display:grid;gap:6px}
+.scope-legend-title{color:#82978c;font-size:9px;font-weight:850;letter-spacing:.8px;margin-bottom:2px}
+.scope-key{display:flex;align-items:center;gap:9px;color:#62786c;font-size:10px}
+.scope-key i{display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid #00000018}
+.location-dot.diamond{border-radius:2px;transform:rotate(45deg)}
+.ownership-diamond-icon{background:transparent;border:0}
+.ownership-diamond{display:block;width:14px;height:14px;transform:rotate(45deg);border:2px solid #fff;border-radius:2px;margin:2px;box-shadow:0 0 0 1px #1f382b55}
+.map-tooltip-body{max-height:330px;overflow-y:auto}
+.leaflet-popup-content .map-tooltip-body{max-height:min(68vh,560px)}
+.map-tooltip-grid{grid-template-columns:115px 1fr}
+.map-source-links{margin-top:9px;font-size:10px;line-height:1.6}
+.map-source-links a{text-decoration:none;font-weight:720}
+.card-badges{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap;max-width:80%}
+.card-owner{max-width:none;font-size:9px;text-align:center}
+.scope-badge,.reno-owned-status{--scope-color:#c1d98b;display:inline-block;border-left:4px solid var(--scope-color);background:#f1f6f1;color:#3b604d;font-size:9px;padding:5px 7px;border-radius:5px;font-weight:800}
+
+/* Renovation: group by ownership, then expand each individual project */
+.reno-owner-details{background:white;border:1px solid #dfe8e4;border-radius:10px;overflow:hidden}
+.reno-owner-summary{cursor:pointer;display:flex;align-items:center;gap:9px;padding:13px 14px;list-style:none;font-size:11px;color:#435e54}
+.reno-owner-summary::-webkit-details-marker,.reno-project-summary::-webkit-details-marker{display:none}
+.reno-owner-summary strong{flex:1;line-height:1.35}
+.reno-owner-summary:hover,.reno-project-summary:hover{background:#f4f9f6}
+.reno-owner-count{border-radius:5px;background:#e7f1ed;color:#317560;padding:4px 9px;font-size:12px;font-variant-numeric:tabular-nums;font-weight:820}
+.reno-chevron{color:#8b9c94;font-size:17px;transition:transform .2s}
+.reno-owner-details[open]>.reno-owner-summary>.reno-chevron,.reno-project-details[open]>.reno-project-summary>.reno-chevron{transform:rotate(180deg)}
+.reno-projects{border-top:1px solid #e4ece8;padding:8px 9px 11px;display:grid;gap:7px;background:#f8faf9}
+.reno-project-details{background:white;border:1px solid #e4eee9;border-radius:8px;overflow:hidden}
+.reno-project-summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:11px}
+.reno-project-name{min-width:0;flex:1;line-height:1.35}
+.reno-project-name b{display:block;color:#28463c;font-size:12px}
+.reno-project-name small{display:block;color:#879992;font-size:10px;overflow-wrap:anywhere;margin-top:4px}
+.reno-owned-status{white-space:nowrap;font-size:9px}
+.reno-project-body{padding:10px;background:#f8faf9}
+.reno-project-body>.property-card{box-shadow:none}
+.card-footer{flex-wrap:wrap}
+.tax-card-tags{display:grid;gap:8px;padding:0 15px 13px}
+.tax-card-tags .card-badges{max-width:100%;justify-content:flex-start}
+.tax-card-tags .card-owner{max-width:100%}
+.tax-mix-badge{font-size:10px;font-weight:730;color:#3c7362;background:#e8f3ed;border-radius:6px;padding:6px 8px;line-height:1.45;width:fit-content}
+.tax-extra-details{border-top:1px solid #eaf1ed;padding:10px 15px}
+.tax-extra-details summary{font-size:11px;font-weight:750;color:#257c68;cursor:pointer;padding:4px 0}
+.tax-extra-details dl{margin:12px 0 0;display:grid;gap:9px}
+.tax-detail-field{min-width:0;display:grid;grid-template-columns:minmax(96px,33%) 1fr;gap:9px;align-items:start}
+.tax-detail-field dt{font-size:10px;color:#94a49c}
+.tax-detail-field dd{font-size:10.5px;color:#385a4e;margin:0;overflow-wrap:anywhere}
+
+/* ==============================================================
+   Fourth tab — Revit-like, multi-level property schedule
+   ============================================================== */
+.page-schedule{min-height:72vh}
+.schedule-controls{padding:17px 18px;background:#fff;border:1px solid var(--line);border-radius:13px;margin-bottom:18px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.schedule-group-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.schedule-group-controls label{font-size:10px;color:#78918a;font-weight:850;letter-spacing:.8px;display:grid;gap:7px}
+.schedule-group-controls select{font-size:12px;font-weight:650;border-radius:7px;color:#2e5950}
+.schedule-secondary-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.schedule-secondary-controls .input-icon-wrap{flex:1 1 240px}
+.schedule-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.schedule-actions button{padding:10px 12px;border-radius:7px;border:1px solid #d7e4de;background:#fff;color:#426f60;font-size:11px;font-weight:760}
+.schedule-actions button:hover{background:#eaf5ef}
+.schedule-actions #schedule-export{background:#1b6d59;color:white;border-color:#1b6d59}
+.schedule-actions #schedule-export:hover{background:#145340}
+.schedule-help{font-size:11px;color:#8ba099;line-height:1.45;margin:0}
+.schedule-table-shell{border-radius:12px;border:1px solid #dce6e1;overflow:hidden;background:white;box-shadow:var(--shadow)}
+.schedule-table-bar{padding:13px 15px;display:flex;justify-content:space-between;gap:15px;align-items:center;border-bottom:1px solid #e0eae5}
+.schedule-table-bar strong{font-size:10px;letter-spacing:1.05px;color:#48776b}
+.schedule-table-bar span{font-size:11px;color:#83988e}
+.schedule-table-scroll{overflow:auto;max-height:min(72vh,850px);position:relative;scrollbar-width:thin}
+.property-schedule{border-collapse:separate;border-spacing:0;min-width:2170px;width:100%;table-layout:fixed;font-size:11px;color:#355348}
+.property-schedule th{position:sticky;top:0;z-index:6;background:#e5efe9;color:#48685b;border-bottom:1px solid #ccdcd2;border-right:1px solid #d6e5db;padding:11px 10px;text-align:left;line-height:1.25;font-size:10px;letter-spacing:.35px}
+.property-schedule th:nth-child(1){width:125px}.property-schedule th:nth-child(2){width:125px}.property-schedule th:nth-child(3){width:65px}.property-schedule th:nth-child(4){width:205px}
+.property-schedule th:nth-child(5){width:155px}.property-schedule th:nth-child(6){width:155px}.property-schedule th:nth-child(7){width:160px}.property-schedule th:nth-child(8){width:125px}
+.property-schedule th:nth-child(9){width:110px}.property-schedule th:nth-child(10),.property-schedule th:nth-child(11){width:100px}
+.property-schedule th:nth-child(12),.property-schedule th:nth-child(13){width:85px}.property-schedule th:nth-child(14){width:155px}
+.property-schedule th:nth-child(15){width:190px}.property-schedule th:nth-child(16){width:180px}.property-schedule th:nth-child(17){width:173px}
+.schedule-data-row td{background:#fff;border-bottom:1px solid #e5ece8;border-right:1px solid #eef2ef;padding:10px;vertical-align:top;line-height:1.45;overflow-wrap:anywhere}
+.schedule-data-row:nth-child(even) td{background:#fafcfb}
+.schedule-data-row:hover td{background:#f2f8f4}
+.schedule-sticky-cell{position:sticky!important;left:0;z-index:3;border-right:2px solid #dce8e0!important}
+.property-schedule th.schedule-sticky-cell{z-index:9}
+.schedule-data-row td.schedule-sticky-cell{background:#f6faf7}
+.schedule-project-cell{display:grid;gap:5px}
+.schedule-project-cell strong{font-size:10px;color:#26735d}
+.schedule-project-cell span{font-size:11px;font-weight:730;color:#25473d}
+.schedule-group-row td{padding:0;background:#e4efe7;border-bottom:1px solid #cfdfd4}
+.schedule-level-2 td{background:#f0f5ef}
+.schedule-level-3 td{background:#f7faf5}
+.schedule-group-toggle{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;padding:11px 13px 11px calc(13px + var(--schedule-indent));font-size:12px;color:#355c4d}
+.schedule-group-toggle:hover{background:#dcebe0}
+.schedule-group-label{font-size:10px;color:#6b8777;font-weight:730}
+.schedule-group-toggle strong{font-weight:820;color:#2e5f48}
+.schedule-group-count{margin-left:auto;font-size:10px;color:#6d8b78;font-weight:680;background:#fff9;padding:4px 8px;border-radius:6px}
+.schedule-fold{width:12px;font-size:15px;color:#477966}
+.schedule-scope-chip{display:inline-block;border-left:4px solid var(--scope-color);padding:4px 6px;border-radius:4px;background:#f0f6ee;font-size:10px;line-height:1.35}
+.schedule-long-cell{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden;font-size:10.5px;color:#61766b}
+.schedule-satellite-cell{padding:7px!important}
+.schedule-mini-map{height:106px;width:148px;border-radius:6px}
+.schedule-mini-map .leaflet-control-container{display:none}
+.schedule-google-link{display:block;text-decoration:none;font-weight:700;font-size:9.5px;margin-top:4px}
+.schedule-google-link:hover{text-decoration:underline}
+.schedule-empty-cell{padding:40px 15px!important;text-align:center;color:#8b9d95}
+.missing-value{color:#9dad9f;font-size:10px}
+@media(max-width:1050px){.tab-trailing{display:none}.schedule-group-controls{gap:8px}}
+@media(max-width:760px){
+  .tab-strip{gap:14px}
+  .map-sidebar .legend-block{display:block}
+  .map-sidebar{max-height:560px}
+  .map-sidebar .list-block{max-height:160px}
+  .scope-legend{grid-template-columns:1fr 1fr}
+  .scope-legend-title{grid-column:1/-1}
+  .schedule-group-controls{grid-template-columns:1fr}
+  .schedule-secondary-controls{display:grid}
+  .schedule-secondary-controls .input-icon-wrap{width:100%}
+  .schedule-actions{width:100%}
+  .schedule-actions button{flex:1}
+  .tax-card-tags .card-badges{display:flex}
+  .renovation-grid{gap:12px}
+  .reno-owned-status{white-space:normal}
+}
+
+/* Apply desaturation ONLY to street imagery, never to the satellite layer or marker panes. */
+.osjl-grayscale-tiles{filter:grayscale(1) saturate(0) brightness(1.07) contrast(.90)}
+
+/* 2026-11-05: map popup notes from the authoritative Property Portfolio CSV. */
+.map-popup-notes{margin-top:13px;padding:10px 11px;background:#f1f7f3;border-left:3px solid #559a77;border-radius:3px 6px 6px 3px}
+.map-popup-notes>span{display:block;font-size:9px;font-weight:850;letter-spacing:.75px;color:#628777;margin-bottom:5px}
+.map-popup-notes p{margin:0;font-size:11px;line-height:1.5;color:#37574a;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Fifth tab: 5 selectable grouping fields, always-expanded schedule rows. */
+.schedule-group-controls{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.schedule-group-row th,.schedule-group-row td{border-bottom:1px solid #c9ded1;border-right:1px solid #d6e6d9;vertical-align:middle}
+.schedule-group-row .schedule-group-heading-cell{padding:8px 9px 8px calc(9px + var(--schedule-indent));text-align:left;position:sticky;left:0;z-index:4;max-width:205px;overflow-wrap:anywhere}
+.schedule-group-heading-cell small{display:block;font-size:9px;color:#738c79;line-height:1.45;font-weight:760;letter-spacing:.35px}
+.schedule-group-heading-cell strong{display:block;font-size:11px;font-weight:850;color:#245944;line-height:1.35;margin-top:3px}
+.schedule-group-total-cell{padding:7px 10px;text-align:left;white-space:nowrap;color:#305944}
+.schedule-group-total-cell b{display:inline-block;border-radius:5px;background:#fff9;padding:3px 7px;font-size:14px;font-variant-numeric:tabular-nums}
+.schedule-group-total-cell span{display:block;font-size:9px;color:#7e9587;margin-top:4px}
+.schedule-level-1 th,.schedule-level-1 td{background:#d9eae0}
+.schedule-level-2 th,.schedule-level-2 td{background:#e7f1e8}
+.schedule-level-3 th,.schedule-level-3 td{background:#f0f6ef}
+.schedule-level-4 th,.schedule-level-4 td{background:#f5f8f3}
+.schedule-level-5 th,.schedule-level-5 td{background:#f9faf6}
+.property-schedule th:nth-child(1){width:205px}
+.property-schedule{min-width:2240px}
+.schedule-sticky-cell{box-shadow:2px 0 4px #1d41340b}
+@media(max-width:1220px){.schedule-group-controls{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.schedule-group-controls{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.schedule-group-controls{grid-template-columns:1fr}}
+
+
+/* 04 — Tenant mix reference: two-column, satellite-first visual cards. */
+.tenant-guide{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px 25px 21px;margin:0 0 25px;min-width:0}
+.tenant-guide-heading{margin-bottom:20px}
+.tenant-guide-heading h3{font-size:22px;letter-spacing:-.5px;margin:0 0 9px;color:#223f36;font-weight:820}
+.tenant-guide-heading h3 span{display:inline-block;margin-left:8px;vertical-align:middle;background:#e8f3ed;color:#387b5f;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:800;letter-spacing:0}
+.tenant-guide-heading p{max-width:770px;margin:0;color:#798c84;line-height:1.55;font-size:12px}
+.tenant-guide-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tenant-guide-card{min-width:0;min-height:235px;background:#fcfdfc;border:1px solid #dfeae4;border-radius:12px;display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,42%);overflow:hidden;box-shadow:0 2px 8px rgba(28,56,45,.025);transition:border-color .15s,box-shadow .15s}
+.tenant-guide-card:hover{border-color:#afd0bd;box-shadow:0 5px 17px rgba(26,63,44,.07)}
+.tenant-guide-card-text{min-width:0;padding:17px 15px 15px 17px;display:flex;flex-direction:column}
+.tenant-guide-card-titleline{display:flex;align-items:flex-start;gap:10px}
+.tenant-guide-number{flex:0 0 28px;width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#e6f2eb;color:#2f795c;font-size:11px;font-weight:820;font-variant-numeric:tabular-nums}
+.tenant-guide-card-titleline h4{font-size:14px;line-height:1.28;letter-spacing:-.2px;color:#254f3c;font-weight:810;margin:5px 0 0;overflow-wrap:anywhere}
+.tenant-guide-card-definition{font-size:11.5px;color:#536b60;line-height:1.55;margin:13px 0 16px;overflow-wrap:anywhere}
+.tenant-guide-card-bottom{margin-top:auto;display:grid;align-items:end;gap:10px}
+.tenant-guide-typical>span{display:block;font-size:8.5px;font-weight:830;letter-spacing:1px;color:#839b8c;margin-bottom:6px}
+.tenant-guide-typical>strong{display:block;font-size:10.5px;font-weight:690;color:#385e4d;line-height:1.4}
+.tenant-guide-type-count{justify-self:start;display:inline-block;padding:4px 8px;background:#edf4ef;color:#547864;border-radius:5px;font-size:10px;font-weight:790}
+.tenant-guide-card-map{min-width:0;background:#f1f5f2;border-left:1px solid #e4ede7;display:flex;flex-direction:column;padding:10px;justify-content:center}
+.tenant-guide-map-slot{width:100%;min-width:0}
+.tenant-guide-satellite-map{width:100%;height:165px!important;border:1px solid #d4e1d8;border-radius:8px;background:#e6ede7;overflow:hidden}
+.tenant-guide-satellite-map .leaflet-control-attribution{font-size:7px!important;max-width:100%;white-space:normal}
+.tenant-guide-satellite-map .leaflet-control-zoom a{width:24px;height:24px;line-height:24px;font-size:15px}
+.tenant-guide-map-caption{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:4px 9px;padding:9px 1px 1px;font-size:10px;line-height:1.3;font-weight:780;color:#3c6350}
+.tenant-guide-map-caption a{font-size:9px;font-weight:780;color:#197b64;text-decoration:none;white-space:nowrap}
+.tenant-guide-map-caption a:hover{text-decoration:underline}
+.tenant-guide-map-loading,.tenant-guide-map-missing{font-size:11px;color:#869a8d;line-height:1.5;padding:28px 10px}
+.tenant-guide-footnote{margin:17px 2px 0;font-size:10.5px;color:#7a9183;line-height:1.65}
+.tenant-guide-footnote strong{color:#4d6f5c}
+@media(max-width:1260px){
+  .tenant-guide-card{grid-template-columns:minmax(0,1fr) minmax(170px,40%)}
+  .tenant-guide-satellite-map{height:150px!important}
+}
+@media(max-width:1040px){
+  .tenant-guide-card{display:flex;flex-direction:column}
+  .tenant-guide-card-map{border-left:0;border-top:1px solid #e4ede7}
+  .tenant-guide-card-text{min-height:200px}
+  .tenant-guide-satellite-map{height:176px!important}
+}
+@media(max-width:760px){
+  .tenant-guide{padding:18px 14px 16px}
+  .tenant-guide-heading h3{font-size:19px}
+  .tenant-guide-cards{grid-template-columns:1fr;gap:12px}
+  .tenant-guide-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,42%)}
+  .tenant-guide-card-map{border-left:1px solid #e4ede7;border-top:0}
+  .tenant-guide-card-text{min-height:0}
+  .tenant-guide-satellite-map{height:165px!important}
+}
+@media(max-width:540px){
+  .tenant-guide-card{display:flex;flex-direction:column}
+  .tenant-guide-card-text{min-height:160px}
+  .tenant-guide-card-map{border-left:0;border-top:1px solid #e4ede7}
+  .tenant-guide-satellite-map{height:180px!important}
+}

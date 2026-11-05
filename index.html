@@ -29,9 +29,11 @@
     </header>
 
     <div class="tab-strip" role="tablist" aria-label="Research pages">
-      <button id="tab-map" class="tab active" role="tab" aria-selected="true" aria-controls="page-map" type="button" data-tab="map"><span class="tab-icon">◉</span> Property Map <span id="tab-map-count" class="tab-count">183</span></button>
+      <button id="tab-map" class="tab active" role="tab" aria-selected="true" aria-controls="page-map" type="button" data-tab="map"><span class="tab-icon">◉</span> Property Map <span id="tab-map-count" class="tab-count">—</span></button>
       <button id="tab-renovation" class="tab" role="tab" aria-selected="false" aria-controls="page-renovation" type="button" data-tab="renovation"><span class="tab-icon">▦</span> Renovation Review <span id="tab-reno-count" class="tab-count">—</span></button>
       <button id="tab-taxonomy" class="tab" role="tab" aria-selected="false" aria-controls="page-taxonomy" type="button" data-tab="taxonomy"><span class="tab-icon">⑂</span> Ownership &amp; Layout Types <span id="tab-tax-count" class="tab-count">—</span></button>
+      <button id="tab-tenant" class="tab" role="tab" aria-selected="false" aria-controls="page-tenant" type="button" data-tab="tenant"><span class="tab-icon">⊞</span> Ownership &amp; Tenant Mix <span id="tab-tenant-count" class="tab-count">—</span></button>
+      <button id="tab-schedule" class="tab" role="tab" aria-selected="false" aria-controls="page-schedule" type="button" data-tab="schedule"><span class="tab-icon">▤</span> Property Schedule <span id="tab-schedule-count" class="tab-count">—</span></button>
       <div class="tab-trailing">Northeast &amp; Mid-Atlantic · Portfolio research</div>
     </div>
 
@@ -44,20 +46,25 @@
             <h2>Retail stores &amp; property portfolio</h2>
             <p>All locations in the combined dataset. Hover over a point for property details; click for Google Maps.</p>
           </div>
-          <div class="intro-number"><strong id="map-total">183</strong><span>LOCATIONS IN DATA</span></div>
+          <div class="intro-number"><strong id="map-total">—</strong><span>LOCATIONS IN DATA</span></div>
         </div>
         <div class="map-workspace">
           <aside class="map-sidebar">
             <div class="sidebar-block">
               <label class="control-label" for="map-search">Find a property</label>
               <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="map-search" type="search" placeholder="City, address, tenant, store ID…" autocomplete="off"></div>
-              <label class="control-label select-label" for="map-owner-filter">Ownership / occupancy</label>
-              <select id="map-owner-filter"><option value="all">All property types</option></select>
+              <p class="map-filter-tip">Use the ownership checkboxes below to show multiple categories together.</p>
             </div>
             <div class="sidebar-block legend-block">
-              <div class="sidebar-heading">OWNERSHIP TYPES</div>
-              <div id="ownership-legend" class="ownership-legend"></div>
-              <p class="legend-footnote">Unknown is shown separately; unverified ownership is not treated as owned.</p>
+              <div class="sidebar-heading legend-title-row"><span>OWNERSHIP TYPES</span><span class="legend-actions"><button id="owner-select-all" type="button">All</button><button id="owner-clear" type="button">None</button></span></div>
+              <div id="ownership-legend" class="ownership-legend" role="group" aria-label="Ownership category filters"></div>
+              <div class="scope-legend"><div class="scope-legend-title">OWNED PROPERTY SCOPE · MARKER COLORS</div>
+                <div class="scope-key"><i style="background:#146c3d"></i>Entire retail center</div>
+                <div class="scope-key"><i style="background:#8dd0aa"></i>Partial retail center</div>
+                <div class="scope-key"><i style="background:#3c9b67"></i>Single building / parcel</div>
+                <div class="scope-key"><i style="background:#c1d98b"></i>Undetermined</div>
+              </div>
+              <p class="legend-footnote">Both owned categories use green shades. Diamond markers indicate Owned + No OSJL Store. Unknown ownership is gray.</p>
             </div>
             <div class="sidebar-block list-block">
               <div class="sidebar-list-head"><span>LOCATIONS</span><span id="map-visible-count">—</span></div>
@@ -66,7 +73,7 @@
           </aside>
           <div class="map-stage">
             <div id="map" aria-label="Map of OSJL stores and property locations"></div>
-            <div class="map-attribution-note">Select a marker to inspect property data · Street &amp; satellite basemaps</div>
+            <div class="map-attribution-note">Select a marker for property details · Grayscale street &amp; satellite basemaps</div>
             <div id="map-fallback" class="map-fallback" hidden>Map library could not load. Connect to the internet and refresh this page.</div>
           </div>
         </div>
@@ -111,7 +118,7 @@
           <div>
             <div class="section-kicker">03 / PORTFOLIO TAXONOMY</div>
             <h2>Ownership → Retail center layout</h2>
-            <p>Explore the property portfolio as a two-level research tree. Ownership categories branch into site plan typologies, then individual properties with interactive satellite views.</p>
+            <p>Explore the portfolio by ownership and retail center layout, with tenant mix, ownership scope, acquisition history, and satellite views.</p>
           </div>
           <div class="intro-number"><strong id="tax-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
         </div>
@@ -119,6 +126,7 @@
           <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="tax-search" type="search" placeholder="Search property, address, tenant, layout…" autocomplete="off"></div>
           <select id="tax-owner-filter" aria-label="Filter by ownership"><option value="all">All ownership types</option></select>
           <select id="tax-layout-filter" aria-label="Filter by retail center type"><option value="all">All layout types</option></select>
+          <select id="tax-mix-filter" aria-label="Filter by tenant mix"><option value="all">All tenant mix types</option></select>
           <div class="tax-toolbar-actions"><button type="button" id="tax-expand">Expand all</button><button type="button" id="tax-collapse">Collapse all</button></div>
         </div>
         <div class="taxonomy-overview" aria-label="Interactive classification hierarchy">
@@ -127,6 +135,252 @@
         </div>
         <div class="taxonomy-section-head"><div class="section-kicker">PROPERTY COLLECTIONS</div><span id="tax-visible-count" class="tax-visible-count"></span></div>
         <div id="taxonomy-results" class="taxonomy-results"></div>
+      </section>
+
+      <section id="page-tenant" class="page page-taxonomy page-tenant" role="tabpanel" aria-labelledby="tab-tenant" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">04 / TENANT MIX TAXONOMY</div>
+            <h2>Ownership → Tenant mix types</h2>
+            <p>Compare the tenant mix across owned and leased properties. Select a category to jump to its property cards, satellite map, and portfolio details.</p>
+          </div>
+          <div class="intro-number"><strong id="mix-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+        </div>
+        <!-- English-only classification guide; every satellite map is driven by the authoritative Portfolio CSV. -->
+        <section class="tenant-guide" aria-labelledby="tenant-guide-title">
+          <div class="tenant-guide-heading">
+            <div>
+              <div class="section-kicker">REFERENCE / CLASSIFICATION DEFINITIONS</div>
+              <h3 id="tenant-guide-title">Tenant Mix Classification <span>10 Types</span></h3>
+              <p>Functional groupings of OSJL and neighboring tenants. Each example shows an interactive satellite map from the portfolio.</p>
+            </div>
+          </div>
+          <div class="tenant-guide-cards" id="tenant-guide-cards">
+            <article class="tenant-guide-card" data-tenant-type="OSJL Only">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">01</span>
+                  <h4>OSJL Only</h4>
+                </div>
+                <p class="tenant-guide-card-definition">Only OSJL is listed as a tenant.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL176" data-example-name="Rutland, VT">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Automotive">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">02</span>
+                  <h4>OSJL + Automotive</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL paired with automotive repair, tire services, or auto-parts retailers.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Town Fair Tire</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL017" data-example-name="Old Saybrook, CT">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Utility Retail">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">03</span>
+                  <h4>OSJL + Utility Retail</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL paired with discount, hardware, household, or other practical-goods retailers; includes primarily big-box retail clusters.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Harbor Freight + Dollar Tree</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL096" data-example-name="Rockland, ME">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Fitness">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">04</span>
+                  <h4>OSJL + Fitness</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL paired with a gym, fitness studio, or sports-training facility.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Planet Fitness</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL092" data-example-name="Biddeford, ME">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Convenience">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">05</span>
+                  <h4>OSJL + Convenience</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL paired with quick-service food, coffee, convenience retail, or other frequent everyday stops.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + McDonald’s + Dunkin’</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL010" data-example-name="Ledyard, CT">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Healthcare">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">06</span>
+                  <h4>OSJL + Healthcare</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL paired with medical clinics, rehabilitation, or healthcare facilities.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Medical Clinic</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL129" data-example-name="Centereach, NY">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="OSJL + Mixed Services">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">07</span>
+                  <h4>OSJL + Mixed Services</h4>
+                </div>
+                <p class="tenant-guide-card-definition">OSJL with multiple practical services such as automotive, fitness, healthcare, and everyday-service businesses, without a dominant leisure focus.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Auto Services + Fitness + Healthcare</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL044" data-example-name="Fairhaven, MA">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="Grocery-Anchored Retail">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">08</span>
+                  <h4>Grocery-Anchored Retail</h4>
+                </div>
+                <p class="tenant-guide-card-definition">A grocery store is a primary anchor alongside OSJL and other retail or service uses.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Supermarket + Retail</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL122" data-example-name="Glassboro, NJ">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="Retail, Services &amp; Experiences">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">09</span>
+                  <h4>Retail, Services &amp; Experiences</h4>
+                </div>
+                <p class="tenant-guide-card-definition">Retail together with a broader range of dining, leisure, entertainment, or experience-oriented uses.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Restaurants + Entertainment + Services</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="OSJL083" data-example-name="Easton, MD">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+            <article class="tenant-guide-card" data-tenant-type="Other">
+              <div class="tenant-guide-card-text">
+                <div class="tenant-guide-card-titleline">
+                  <span class="tenant-guide-number">10</span>
+                  <h4>Other</h4>
+                </div>
+                <p class="tenant-guide-card-definition">A documented tenant arrangement that does not fit the other nine categories.</p>
+                <div class="tenant-guide-card-bottom">
+                  <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>Special or nonstandard property use</strong></div>
+                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                </div>
+              </div>
+              <div class="tenant-guide-card-map">
+                <div class="tenant-guide-map-slot" data-example-store-id="N1" data-example-name="Waterbury, CT">
+                  <div class="tenant-guide-map-loading">Loading satellite map…</div>
+                </div>
+              </div>
+            </article>
+          </div>
+          <p class="tenant-guide-footnote"><strong>Reading the guide:</strong> Utility Retail includes big-box retail clusters. Satellite examples show the property setting, not legal ownership boundaries. Counts reflect the currently loaded Property Portfolio.</p>
+        </section>
+        <div class="taxonomy-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="mix-search" type="search" placeholder="Search city, tenant, tenant mix, store ID…" autocomplete="off"></div>
+          <select id="mix-owner-filter" aria-label="Filter tenant mix by ownership"><option value="all">All ownership types</option></select>
+          <select id="mix-type-filter" aria-label="Filter by tenant mix type"><option value="all">All tenant mix types</option></select>
+          <select id="mix-layout-filter" aria-label="Filter by retail center layout"><option value="all">All layout types</option></select>
+          <div class="tax-toolbar-actions"><button type="button" id="mix-expand">Expand all</button><button type="button" id="mix-collapse">Collapse all</button></div>
+        </div>
+        <div class="taxonomy-overview" aria-label="Tenant mix classification hierarchy">
+          <div class="tax-overview-header"><span class="tree-kicker">OWNERSHIP × TENANT MIX</span><span class="tree-note">Click a branch to jump to its properties</span></div>
+          <div id="mix-tree" class="tax-tree-root"></div>
+        </div>
+        <div class="taxonomy-section-head"><div class="section-kicker">PROPERTY COLLECTIONS</div><span id="mix-visible-count" class="tax-visible-count"></span></div>
+        <div id="mix-results" class="taxonomy-results"></div>
+      </section>
+
+      <section id="page-schedule" class="page page-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">05 / DYNAMIC PROPERTY SCHEDULE</div>
+            <h2>Property schedule &amp; group counts</h2>
+            <p>Compare all projects in one continuous table. Choose up to five grouping fields; every group and subgroup displays its property count, with no rows hidden behind dropdowns.</p>
+          </div>
+          <div class="intro-number"><strong id="schedule-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+        </div>
+        <div class="schedule-controls">
+          <div class="schedule-group-controls">
+            <label>GROUP 1 <select id="schedule-group-1" aria-label="First grouping field"></select></label>
+            <label>GROUP 2 <select id="schedule-group-2" aria-label="Second grouping field"></select></label>
+            <label>GROUP 3 <select id="schedule-group-3" aria-label="Third grouping field"></select></label>
+            <label>GROUP 4 <select id="schedule-group-4" aria-label="Fourth grouping field"></select></label>
+            <label>GROUP 5 <select id="schedule-group-5" aria-label="Fifth grouping field"></select></label>
+          </div>
+          <div class="schedule-secondary-controls">
+            <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="schedule-search" type="search" placeholder="Search properties, tenants, locations…" autocomplete="off"></div>
+            <div class="schedule-actions"><button id="schedule-export" type="button">Export CSV</button></div>
+          </div>
+          <p class="schedule-help">Group order applies from left to right. Every shaded row is a visible subtotal; the count is for that group within its parent. No project rows are collapsed. Scroll horizontally for more property fields.</p>
+        </div>
+        <div class="schedule-table-shell">
+          <div class="schedule-table-bar"><strong>PROPERTY SCHEDULE</strong><span id="schedule-visible-count">—</span></div>
+          <div id="schedule-table-scroll" class="schedule-table-scroll"><div id="schedule-results" class="empty-state">Loading properties…</div></div>
+        </div>
       </section>
     </main>
     <footer class="footer">OSJL Property Atlas <span>·</span> Data remains in your local CSV files <span>·</span> Historical ownership classifications may require deed verification</footer>
