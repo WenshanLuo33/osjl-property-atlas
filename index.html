@@ -24,7 +24,9 @@
       <div class="top-right">
         <span class="live-indicator"><span class="live-dot"></span> CSV-linked</span>
         <span id="updated-label" class="updated-label">Loading data…</span>
-        <button id="reload-button" class="reload-button" type="button" title="Reload both CSV files">↻ <span>Refresh</span></button>
+        <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden>
+        <button id="csv-file-button" class="reload-button" type="button" hidden>Choose CSV</button>
+        <button id="reload-button" class="reload-button" type="button" title="Reload the unified CSV">↻ <span>Refresh</span></button>
       </div>
     </header>
 
@@ -44,7 +46,7 @@
           <div>
             <div class="section-kicker">01 / SPATIAL DISTRIBUTION</div>
             <h2>Retail stores &amp; property portfolio</h2>
-            <p>All locations in the combined dataset. Hover over a point for property details; click for Google Maps.</p>
+            <p>All locations in the unified CSV. Hover over a point for property details; click for Google Maps.</p>
           </div>
           <div class="intro-number"><strong id="map-total">—</strong><span>LOCATIONS IN DATA</span></div>
         </div>
@@ -99,7 +101,7 @@
               <div><div class="eyebrow">NO VISIBLE IMPROVEMENT REPORTED</div><h3 id="no-improvement-title">No improvement</h3></div>
               <span class="column-count" id="no-improvement-count">—</span>
             </div>
-            <div class="column-description">Items explicitly marked “No improvement” in the portfolio CSV.</div>
+            <div class="column-description">Items explicitly marked “No improvement” in the unified CSV.</div>
             <div id="cards-no-improvement" class="card-stack"></div>
           </section>
           <section class="renovation-column improvements-col" aria-labelledby="improvements-title">
@@ -120,7 +122,7 @@
             <h2>Ownership → Retail center layout</h2>
             <p>Explore the portfolio by ownership and retail center layout, with tenant mix, ownership scope, acquisition history, and satellite views.</p>
           </div>
-          <div class="intro-number"><strong id="tax-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+          <div class="intro-number"><strong id="tax-total">—</strong><span>PROPERTIES IN DATA</span></div>
         </div>
         <div class="taxonomy-toolbar">
           <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="tax-search" type="search" placeholder="Search property, address, tenant, layout…" autocomplete="off"></div>
@@ -144,15 +146,15 @@
             <h2>Ownership → Tenant mix types</h2>
             <p>Compare the tenant mix across owned and leased properties. Select a category to jump to its property cards, satellite map, and portfolio details.</p>
           </div>
-          <div class="intro-number"><strong id="mix-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+          <div class="intro-number"><strong id="mix-total">—</strong><span>PROPERTIES IN DATA</span></div>
         </div>
-        <!-- English-only classification guide; every satellite map is driven by the authoritative Portfolio CSV. -->
+        <!-- English-only classification guide; every satellite map uses the unified CSV. -->
         <section class="tenant-guide" aria-labelledby="tenant-guide-title">
           <div class="tenant-guide-heading">
             <div>
               <div class="section-kicker">REFERENCE / CLASSIFICATION DEFINITIONS</div>
               <h3 id="tenant-guide-title">Tenant Mix Classification <span>10 Types</span></h3>
-              <p>Functional groupings of OSJL and neighboring tenants. Each example shows an interactive satellite map from the portfolio.</p>
+              <p>Functional groupings of OSJL and neighboring tenants. Each example shows an interactive satellite map from the unified CSV.</p>
             </div>
           </div>
           <div class="tenant-guide-cards" id="tenant-guide-cards">
@@ -337,7 +339,7 @@
               </div>
             </article>
           </div>
-          <p class="tenant-guide-footnote"><strong>Reading the guide:</strong> Utility Retail includes big-box retail clusters. Satellite examples show the property setting, not legal ownership boundaries. Counts reflect the currently loaded Property Portfolio.</p>
+          <p class="tenant-guide-footnote"><strong>Reading the guide:</strong> Utility Retail includes big-box retail clusters. Satellite examples show the property setting, not legal ownership boundaries. Counts reflect the currently loaded unified CSV.</p>
         </section>
         <div class="taxonomy-toolbar">
           <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="mix-search" type="search" placeholder="Search city, tenant, tenant mix, store ID…" autocomplete="off"></div>
@@ -361,7 +363,7 @@
             <h2>Property schedule &amp; group counts</h2>
             <p>Compare all projects in one continuous table. Choose up to five grouping fields; every group and subgroup displays its property count, with no rows hidden behind dropdowns.</p>
           </div>
-          <div class="intro-number"><strong id="schedule-total">—</strong><span>PORTFOLIO PROPERTIES</span></div>
+          <div class="intro-number"><strong id="schedule-total">—</strong><span>PROPERTIES IN DATA</span></div>
         </div>
         <div class="schedule-controls">
           <div class="schedule-group-controls">
@@ -383,7 +385,7 @@
         </div>
       </section>
     </main>
-    <footer class="footer">OSJL Property Atlas <span>·</span> Data remains in your local CSV files <span>·</span> Historical ownership classifications may require deed verification</footer>
+    <footer class="footer">OSJL Property Atlas <span>·</span> All pages use DATA/OSJL_183_Stores.csv <span>·</span> Historical ownership classifications may require deed verification</footer>
   </div>
   <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image preview"><button id="lightbox-close" class="lightbox-close" type="button" aria-label="Close preview">×</button><img id="lightbox-img" alt="Enlarged property image"><div id="lightbox-caption" class="lightbox-caption"></div></div>
 </body>

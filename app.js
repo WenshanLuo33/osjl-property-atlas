@@ -1,8 +1,7 @@
-/* OSJL Property Atlas — DATA/ CSV files remain the single source of data. */
+/* OSJL Property Atlas — one authoritative data source: DATA/OSJL_183_Stores.csv. */
 'use strict';
 const CONFIG={
-  storeCSV:'DATA/OSJL_183_Stores.csv',
-  portfolioCSV:'DATA/OSJL_Property_Portfolio.csv',
+  csv:'DATA/OSJL_183_Stores.csv',
   refreshMilliseconds:20000,
   defaultZoom:7
 };
@@ -10,7 +9,6 @@ const OWNER_TYPES=[
   {key:'Owned + OSJL Store',label:'Owned + OSJL Store',color:'#287a50'},
   {key:'Owned + No OSJL Store',label:'Owned + No OSJL Store',color:'#287a50'},
   {key:'Leased OSJL Store',label:'Leased OSJL Store',color:'#4285b6'},
-  {key:'Ground / Master Leased Property',label:'Ground / Master Leased',color:'#9259b0'},
   {key:'Unknown',label:'Unknown / Unverified',color:'#929b9e'}
 ];
 // The center ownership scope has a separate visual encoding from tenure.
@@ -43,7 +41,7 @@ const SCHEDULE_FIELDS=[
   ['Renovation_Status','Renovation status']
 ];
 const MIX_ORDER=['OSJL Only','OSJL + Automotive','OSJL + Utility Retail','OSJL + Fitness','OSJL + Convenience','OSJL + Healthcare','OSJL + Mixed Services','Grocery-Anchored Retail','Retail, Services & Experiences','Other'];
-let storeRows=[],portfolioRows=[],mapRows=[],previousStoreText=null,previousPortfolioText=null;
+let propertyRows=[],previousCSVText=null;
 let map=null,markerLayer=null,markers=[],hasInitialBounds=false,activeTab='map';
 let updating=false,renderSerial=0,cardMapObserver=null,cardMaps=[];
 const mapOwnerSelection=new Set(OWNER_TYPES.map(t=>t.key));
@@ -68,21 +66,7 @@ function ownerBadge(row){
   const scope=isOwned(row.Property_Ownership_Type)?`<span class="scope-badge" style="--scope-color:${color}">${escapeHTML(scopeShort(row.Ownership_Scope))}</span>`:'';
   return `<div class="card-badges"><span class="card-owner" style="background:${color}1a;color:#304c45">${escapeHTML(label)}</span>${scope}</div>`;
 }
-// Portfolio cells take precedence on matching rows, including intentionally cleared cells.
-// Portfolio's N1/L2 identifiers match Property_Record_ID in the larger stores file.
-function combineMapRows(){
-  const portfolio=new Map(portfolioRows.map(row=>[str(row.Store_ID)||str(row.Property_Record_ID),row]));
-  const consumed=new Set();
-  const combined=storeRows.map(row=>{
-    const id=str(row.Store_ID)||str(row.Property_Record_ID);
-    const overlay=portfolio.get(id);
-    if(!overlay)return row;
-    consumed.add(id);
-    return {...row,...overlay,Property_Record_ID:str(row.Property_Record_ID)||str(overlay.Property_Record_ID)};
-  });
-  for(const [id,row] of portfolio){if(!consumed.has(id))combined.push({...row});}
-  return combined;
-}
+// Every view reads the same validated rows from the unified CSV.
 
 function escapeHTML(x) {
   return String(x ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -164,7 +148,7 @@ function mapFilter(){
   const query=$('map-search').value.trim().toLocaleLowerCase();
   return row=>(!query||searchable(row).includes(query))&&mapOwnerSelection.has(normOwner(row.Property_Ownership_Type));
 }
-function matchingMapRows(){return mapRows.filter(mapFilter());}
+function matchingMapRows(){return propertyRows.filter(mapFilter());}
 
 function tooltipHTML(row,withLink=false){
   const address=shortAddress(row),title=displayTitle(row);
@@ -204,7 +188,7 @@ function ensureMap(){
 function makeMarkers(){
   ensureMap();if(!map){updateVisibleMarkers();return;}
   markerLayer.clearLayers();markers=[];
-  mapRows.forEach(row=>{
+  propertyRows.forEach(row=>{
     const lat=Number(row.Latitude),lng=Number(row.Longitude);
     if(!str(row.Latitude)||!str(row.Longitude)||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
     const color=rowColor(row);
@@ -234,7 +218,7 @@ function updateVisibleMarkers(){
   const filtered=matchingMapRows();
   $('map-visible-count').textContent=labelLocationCount(filtered.length)+' shown';
   const counts=new Map(OWNER_TYPES.map(t=>[t.key,0]));
-  mapRows.forEach(row=>{const key=normOwner(row.Property_Ownership_Type);counts.set(key,counts.get(key)+1);});
+  propertyRows.forEach(row=>{const key=normOwner(row.Property_Ownership_Type);counts.set(key,counts.get(key)+1);});
   $('ownership-legend').innerHTML=OWNER_TYPES.map(t=>`<label class="legend-item${mapOwnerSelection.has(t.key)?'':' unchecked'}">
     <input type="checkbox" data-owner="${escapeHTML(t.key)}" ${mapOwnerSelection.has(t.key)?'checked':''}>
     <span class="legend-circle ${t.key==='Owned + No OSJL Store'?'legend-diamond':''}" style="background:${t.color}"></span>
@@ -302,8 +286,14 @@ function assetUrl(value,folder) {
 function assetCandidates(row,field,category) {
   const paths=[];const preferred=assetUrl(row[field],category);
   if(preferred)paths.push(preferred);
+  if(category==='PICTURE' && field==='renovation before') {
+    const legacy=assetUrl(row['Before Picture'],'PICTURE');if(legacy)paths.push(legacy);
+  }
+  if(category==='PICTURE' && field==='renovation after') {
+    const legacy=assetUrl(row['After Picture'],'PICTURE');if(legacy)paths.push(legacy);
+  }
   const id=rowId(row); const city=str(row.City).replace(/[^A-Za-z0-9]/g,''); const state=str(row.State).replace(/[^A-Za-z]/g,'');
-  if(category==='PICTURE' && /^OSJL\d+$/i.test(id)) {
+  if(category==='PICTURE' && ['renovation before','renovation after'].includes(field) && /^OSJL\d+$/i.test(id)) {
     const suffix=field==='renovation before'?'Before':'After';
     for(const ext of ['png','jpg','jpeg','webp'])paths.push(assetUrl(`PICTURE/${id}_${suffix}.${ext}`,'PICTURE'));
   }
@@ -332,19 +322,28 @@ function openLightbox(url,caption) {
 }
 function closeLightbox(){$('lightbox').hidden=true; $('lightbox-img').src='';}
 async function addMediaToCard(card,row,serial) {
-  const [before,after,plan]=await Promise.all([
-    firstExisting(assetCandidates(row,'renovation before','PICTURE')),
-    firstExisting(assetCandidates(row,'renovation after','PICTURE')),
+  const fieldPairs=[
+    ['renovation before','renovation after'],
+    ['renovation before2','renovation after2'],
+    ['renovation before3','renovation after3'],
+    ['renovation before4','renovation after4']
+  ];
+  const [imagePairs,plan]=await Promise.all([
+    Promise.all(fieldPairs.map(async ([beforeField,afterField])=>Promise.all([
+      firstExisting(assetCandidates(row,beforeField,'PICTURE')),
+      firstExisting(assetCandidates(row,afterField,'PICTURE'))
+    ]))),
     firstExisting(assetCandidates(row,'plans','PLAN'))
   ]);
-  if(serial!==renderSerial||!card.isConnected||(!before&&!after&&!plan))return;
+  if(serial!==renderSerial||!card.isConnected||(!imagePairs.some(pair=>pair.some(Boolean))&&!plan))return;
   const slot=card.querySelector('.card-media-slot');
-  if(before||after){
+  for(let i=0;i<imagePairs.length;i++){
+    const [before,after]=imagePairs[i];if(!before&&!after)continue;
     const wrapper=document.createElement('div');wrapper.className='media-block';
-    wrapper.innerHTML='<div class="media-heading">BEFORE / AFTER</div>';
+    wrapper.innerHTML=`<div class="media-heading">BEFORE / AFTER${i?' · SET '+(i+1):''}</div>`;
     const grid=document.createElement('div');grid.className='before-after-grid';
-    if(before)grid.appendChild(previewFigure(before,'BEFORE'));
-    if(after)grid.appendChild(previewFigure(after,'AFTER'));
+    if(before)grid.appendChild(previewFigure(before,'BEFORE'+(i?' '+(i+1):'')));
+    if(after)grid.appendChild(previewFigure(after,'AFTER'+(i?' '+(i+1):'')));
     wrapper.appendChild(grid);slot.appendChild(wrapper);
   }
   if(plan){
@@ -358,6 +357,7 @@ async function addMediaToCard(card,row,serial) {
     wrapper.appendChild(stage);wrapper.appendChild(link);slot.appendChild(wrapper);
   }
 }
+
 // Shared lazy satellite previews for renovation and taxonomy pages.
 // Destroy off-tab maps so switching pages doesn't retain hundreds of tile layers.
 function disposeCardMaps() {
@@ -398,7 +398,7 @@ function observeCardSatellites(pageId) {
   }else elements.forEach(mountCardSatellite);
 }
 function renderRenovation(){
-  const classified=portfolioRows.filter(row=>renovationCategory(row.Renovation)!=='blank' && normOwner(row.Property_Ownership_Type)!=='Unknown');
+  const classified=propertyRows.filter(row=>renovationCategory(row.Renovation)!=='blank' && normOwner(row.Property_Ownership_Type)!=='Unknown');
   const filtered=classified.filter(renovationFilter);
   const sections=[['cards-no-improvement','no','no-improvement-count'],['cards-improvement','yes','improvements-count']];
   $('reno-total').textContent=labelLocationCount(classified.length);
@@ -440,16 +440,16 @@ function renderRenovation(){
   observeCardSatellites('page-renovation');
 }
 
-// ===== Third tab: ownership → layout hierarchy, derived entirely from the portfolio CSV =====
+// ===== Ownership → layout hierarchy, derived entirely from the unified CSV =====
 const layoutName = row => str(row.Retail_Center_Type) || 'Unclassified Layout';
 function fillLayoutFilter() {
   const select=$('tax-layout-filter'), old=select.value;
-  const names=[...new Set(portfolioRows.map(layoutName))].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+  const names=[...new Set(propertyRows.map(layoutName))].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
   select.innerHTML='<option value="all">All layout types</option>'+names.map(name=>`<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
   select.value=[...select.options].some(option=>option.value===old)?old:'all';
 }
 function fillMixFilter(){
-  const types=[...new Set(portfolioRows.map(row=>str(row.Tenant_Mix_Type)||'Not documented'))]
+  const types=[...new Set(propertyRows.map(row=>str(row.Tenant_Mix_Type)||'Not documented'))]
     .sort((a,b)=>scheduleGroupSort(a,b,'Tenant_Mix_Type'));
   for(const id of ['tax-mix-filter','mix-type-filter']){
     const select=$(id),old=select.value;
@@ -459,7 +459,7 @@ function fillMixFilter(){
 }
 function fillTenantLayoutFilter(){
   const select=$('mix-layout-filter'),old=select.value;
-  const layouts=[...new Set(portfolioRows.map(layoutName))].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+  const layouts=[...new Set(propertyRows.map(layoutName))].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
   select.innerHTML='<option value="all">All layout types</option>'+layouts.map(value=>`<option value="${escapeHTML(value)}">${escapeHTML(value)}</option>`).join('');
   select.value=[...select.options].some(o=>o.value===old)?old:'all';
 }
@@ -482,7 +482,7 @@ function taxonomyFilter(row) {
   return (!query||searchable(row).includes(query)) &&
          (owner==='all'||normOwner(row.Property_Ownership_Type)===owner) &&
          (type==='all'||layoutName(row)===type) &&
-         (mix==='all'||str(row.Tenant_Mix_Type)===mix);
+         (mix==='all'||(str(row.Tenant_Mix_Type)||'Not documented')===mix);
 }
 function projectMiniField(label,value,kind) {
   return `<div class="taxonomy-mini-field"><span>${escapeHTML(label)}</span><strong>${escapeHTML(formatted(value,kind))}</strong></div>`;
@@ -532,10 +532,10 @@ function renderTaxonomyView(mode){
   const tenant=mode==='tenant',prefix=tenant?'mix':'tax';
   const resultsId=tenant?'mix-results':'taxonomy-results';
   const previous=expandedTaxonomyState(resultsId);
-  const filtered=portfolioRows.filter(tenant?tenantTaxonomyFilter:taxonomyFilter);
+  const filtered=propertyRows.filter(tenant?tenantTaxonomyFilter:taxonomyFilter);
   $(prefix+'-visible-count').textContent=`${labelLocationCount(filtered.length)} shown`;
-  $(prefix+'-total').textContent=labelLocationCount(portfolioRows.length);
-  $('tab-'+(tenant?'tenant':'tax')+'-count').textContent=labelLocationCount(portfolioRows.length);
+  $(prefix+'-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-'+(tenant?'tenant':'tax')+'-count').textContent=labelLocationCount(propertyRows.length);
   const overview=$(tenant?'mix-tree':'taxonomy-tree'),results=$(resultsId);
   disposeCardMaps();
   if(tenant)populateTenantGuideMaps();
@@ -581,11 +581,11 @@ function renderTaxonomyView(mode){
   observeCardSatellites(tenant?'page-tenant':'page-taxonomy');
 }
 function renderTaxonomy(){renderTaxonomyView('taxonomy');}
-// Fill the example satellite column from the authoritative portfolio CSV.
-// Store_ID is used (not city alone) because some cities have multiple records.
+// Fill example satellite views from the unified CSV.
+// Use Store_ID or Property_Record_ID; multiple properties may share a city.
 function populateTenantGuideMaps(){
   const typeCounts=new Map();
-  for(const row of portfolioRows){
+  for(const row of propertyRows){
     const type=str(row.Tenant_Mix_Type);
     typeCounts.set(type,(typeCounts.get(type)||0)+1);
   }
@@ -596,9 +596,9 @@ function populateTenantGuideMaps(){
   }
   for(const slot of document.querySelectorAll('#page-tenant .tenant-guide-map-slot[data-example-store-id]')){
     const id=str(slot.dataset.exampleStoreId);
-    const row=portfolioRows.find(r=>str(r.Store_ID).toUpperCase()===id.toUpperCase());
+    const row=propertyRows.find(r=>rowId(r).toUpperCase()===id.toUpperCase());
     if(!row){
-      slot.innerHTML='<span class="tenant-guide-map-missing">Example project not found in portfolio CSV.</span>';
+      slot.innerHTML='<span class="tenant-guide-map-missing">Example project not found in unified CSV.</span>';
       delete slot.dataset.mapCoordinates;
       continue;
     }
@@ -708,13 +708,13 @@ function schedulePropertyRow(row){
   return `<tr class="schedule-data-row">${values.map((v,i)=>`<td class="${i===0?'schedule-sticky-cell':''} ${i===16?'schedule-satellite-cell':''}">${v}</td>`).join('')}</tr>`;
 }
 function renderSchedule(){
-  const filtered=portfolioRows.filter(scheduleFilter);
+  const filtered=propertyRows.filter(scheduleFilter);
   const fields=effectiveScheduleFields();
   const scroll=$('schedule-table-scroll'),left=scroll.scrollLeft,top=scroll.scrollTop;
   const count=filtered.length;
-  $('schedule-visible-count').textContent=`${labelLocationCount(count)} of ${labelLocationCount(portfolioRows.length)} properties · ${fields.length} grouping levels`;
-  $('schedule-total').textContent=labelLocationCount(portfolioRows.length);
-  $('tab-schedule-count').textContent=labelLocationCount(portfolioRows.length);
+  $('schedule-visible-count').textContent=`${labelLocationCount(count)} of ${labelLocationCount(propertyRows.length)} properties · ${fields.length} grouping levels`;
+  $('schedule-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-schedule-count').textContent=labelLocationCount(propertyRows.length);
   disposeCardMaps();
   const groupTitle=key=>SCHEDULE_FIELDS.find(([name])=>name===key)?.[1]||key;
   function groupedRows(rows,level){
@@ -747,7 +747,7 @@ function renderSchedule(){
   observeCardSatellites('page-schedule');
 }
 function exportScheduleCSV(){
-  const rows=portfolioRows.filter(scheduleFilter);
+  const rows=propertyRows.filter(scheduleFilter);
   const fields=effectiveScheduleFields();
   rows.sort((a,b)=>{
     for(const key of fields){
@@ -756,7 +756,7 @@ function exportScheduleCSV(){
     }
     return str(a.State).localeCompare(str(b.State))||str(a.City).localeCompare(str(b.City));
   });
-  const columns=['Store_ID','City','State','Street_Address','Property_Ownership_Type','Ownership_Scope',
+  const columns=['Store_ID','Property_Record_ID','Record_Type','City','State','Street_Address','Property_Ownership_Type','Ownership_Scope',
     'Tenant_Mix_Type','Retail_Center_Type','OSJL_Type','OSJL_Area_SF','Total_GLA_SF','Acquisition_Year',
     'Lease_Start_or_Transfer_Year','Known_Property_Owner','Tenants','Renovation','Latitude','Longitude'];
   const csvCell=value=>'"'+String(value??'').replaceAll('"','""')+'"';
@@ -767,17 +767,17 @@ function exportScheduleCSV(){
 }
 
 function paintHeader(){
-  $('map-total').textContent=labelLocationCount(mapRows.length);
-  $('tab-map-count').textContent=labelLocationCount(mapRows.length);
-  const n=portfolioRows.filter(row=>renovationCategory(row.Renovation)!=='blank'&&normOwner(row.Property_Ownership_Type)!=='Unknown').length;
+  $('map-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-map-count').textContent=labelLocationCount(propertyRows.length);
+  const n=propertyRows.filter(row=>renovationCategory(row.Renovation)!=='blank'&&normOwner(row.Property_Ownership_Type)!=='Unknown').length;
   $('tab-reno-count').textContent=labelLocationCount(n);
   $('reno-total').textContent=labelLocationCount(n);
-  $('tab-tax-count').textContent=labelLocationCount(portfolioRows.length);
-  $('tax-total').textContent=labelLocationCount(portfolioRows.length);
-  $('tab-tenant-count').textContent=labelLocationCount(portfolioRows.length);
-  $('mix-total').textContent=labelLocationCount(portfolioRows.length);
-  $('tab-schedule-count').textContent=labelLocationCount(portfolioRows.length);
-  $('schedule-total').textContent=labelLocationCount(portfolioRows.length);
+  $('tab-tax-count').textContent=labelLocationCount(propertyRows.length);
+  $('tax-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-tenant-count').textContent=labelLocationCount(propertyRows.length);
+  $('mix-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-schedule-count').textContent=labelLocationCount(propertyRows.length);
+  $('schedule-total').textContent=labelLocationCount(propertyRows.length);
 }
 
 function fetchText(path) {
@@ -786,43 +786,75 @@ function fetchText(path) {
     if(!res.ok)throw new Error(`${path}: HTTP ${res.status}`);return res.text();
   });
 }
+function applyCSVText(csvText,force=false){
+  const changed=force||csvText!==previousCSVText;
+  if(changed){
+    const rows=csvRows(csvText);
+    if(!rows.length)throw Error('OSJL_183_Stores.csv is empty.');
+    const needed=['Store_ID','Property_Record_ID','Latitude','Longitude','Property_Ownership_Type',
+      'Tenant_Mix_Type','Retail_Center_Type','Renovation'];
+    const missing=needed.filter(key=>!Object.hasOwn(rows[0],key));
+    if(missing.length)throw Error('CSV is missing required columns: '+missing.join(', '));
+    const used=new Set();
+    for(const row of rows){
+      const id=rowId(row);
+      if(id==='NO ID')throw Error('A property is missing both Store_ID and Property_Record_ID.');
+      if(used.has(id))throw Error('Duplicate Store_ID / Property_Record_ID: '+id);
+      used.add(id);
+    }
+    propertyRows=rows;
+    previousCSVText=csvText;
+    fillLayoutFilter();fillMixFilter();fillTenantLayoutFilter();
+    makeMarkers();
+    if(activeTab==='renovation')renderRenovation();
+    if(activeTab==='taxonomy')renderTaxonomy();
+    if(activeTab==='tenant')renderTenantMix();
+    if(activeTab==='schedule')renderSchedule();
+  }
+  paintHeader();
+  $('updated-label').textContent=(changed?'Loaded ':'Checked ')+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  $('error-notice').hidden=true;
+}
+
+function reportCSVError(error){
+  console.error(error);
+  const direct=window.location.protocol==='file:';
+  const help=direct
+    ? 'Open the CSV using the “Choose CSV” button, or run start_local_server.bat for automatic refresh.'
+    : 'Ensure DATA/OSJL_183_Stores.csv exists with the exact filename and the site is served over HTTP(S).';
+  $('error-notice').innerHTML=`<strong>Unable to read the CSV.</strong> ${escapeHTML(error.message)}<br>${escapeHTML(help)}`;
+  $('error-notice').hidden=false;
+  $('updated-label').textContent='CSV read error';
+}
+
 async function reloadData(force=false){
   if(updating)return;
+  if(window.location.protocol==='file:'){
+    if(force)$('csv-file-input').click();
+    else if(!previousCSVText)reportCSVError(new Error('Direct file mode requires selecting the CSV once.'));
+    return;
+  }
   updating=true;
   try{
-    const [storeText,portfolioText]=await Promise.all([fetchText(CONFIG.storeCSV),fetchText(CONFIG.portfolioCSV)]);
-    const storeChanged=force||storeText!==previousStoreText;
-    const portfolioChanged=force||portfolioText!==previousPortfolioText;
-    if(storeChanged){
-      const rows=csvRows(storeText);
-      if(!rows.length||!Object.hasOwn(rows[0],'Latitude'))throw Error('OSJL_183_Stores.csv is empty or missing Latitude.');
-      storeRows=rows;previousStoreText=storeText;
-    }
-    if(portfolioChanged){
-      const rows=csvRows(portfolioText);
-      if(!rows.length||!Object.hasOwn(rows[0],'Property_Ownership_Type'))throw Error('OSJL_Property_Portfolio.csv is empty or missing Property_Ownership_Type.');
-      portfolioRows=rows;previousPortfolioText=portfolioText;
-      fillLayoutFilter();fillMixFilter();fillTenantLayoutFilter();
-    }
-    if(storeChanged||portfolioChanged){
-      mapRows=combineMapRows();
-      makeMarkers();
-      if(activeTab==='renovation')renderRenovation();
-      if(activeTab==='taxonomy')renderTaxonomy();
-      if(activeTab==='tenant')renderTenantMix();
-      if(activeTab==='schedule')renderSchedule();
-    }
-    paintHeader();
-    $('updated-label').textContent=(storeChanged||portfolioChanged?'Loaded ':'Checked ')+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    $('error-notice').hidden=true;
-  }catch(e){
-    console.error(e);
-    $('error-notice').innerHTML=`<strong>Unable to read CSV files.</strong> ${escapeHTML(e.message)}<br>Make sure the website is served locally (not opened as file://) and that DATA/ contains both CSV files with their exact names.`;
-    $('error-notice').hidden=false;$('updated-label').textContent='CSV read error';
-  }finally{updating=false;}
+    const csvText=await fetchText(CONFIG.csv);
+    applyCSVText(csvText,force);
+  }catch(e){reportCSVError(e);}
+  finally{updating=false;}
 }
+
+async function loadLocalCSV(file){
+  if(!file)return;
+  try{
+    applyCSVText(await file.text(),true);
+    $('updated-label').textContent='Local CSV loaded';
+  }catch(e){reportCSVError(e);}
+}
+
 function init(){
   fillOwnerFilters();fillScheduleSelectors();
+  $('csv-file-button').hidden=window.location.protocol!=='file:';
+  $('csv-file-button').addEventListener('click',()=>$('csv-file-input').click());
+  $('csv-file-input').addEventListener('change',e=>loadLocalCSV(e.target.files[0]));
   document.querySelectorAll('[data-tab]').forEach(tab=>tab.addEventListener('click',()=>setTab(tab.dataset.tab)));
   $('map-search').addEventListener('input',updateVisibleMarkers);
   $('ownership-legend').addEventListener('change',e=>{

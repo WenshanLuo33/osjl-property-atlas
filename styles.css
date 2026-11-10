@@ -232,7 +232,7 @@
 /* Apply desaturation ONLY to street imagery, never to the satellite layer or marker panes. */
 .osjl-grayscale-tiles{filter:grayscale(1) saturate(0) brightness(1.07) contrast(.90)}
 
-/* 2026-11-05: map popup notes from the authoritative Property Portfolio CSV. */
+/* 2026-11-05: map popup notes from the unified OSJL_183_Stores.csv. */
 .map-popup-notes{margin-top:13px;padding:10px 11px;background:#f1f7f3;border-left:3px solid #559a77;border-radius:3px 6px 6px 3px}
 .map-popup-notes>span{display:block;font-size:9px;font-weight:850;letter-spacing:.75px;color:#628777;margin-bottom:5px}
 .map-popup-notes p{margin:0;font-size:11px;line-height:1.5;color:#37574a;white-space:pre-wrap;overflow-wrap:anywhere}
