@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#173d3d">
+  <meta name="theme-color" content="#c9253c">
   <title>OSJL | Retail Property Research</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -15,27 +15,35 @@
   <div class="app-shell">
     <header class="masthead">
       <div class="brand-lockup">
-        <span class="brand-square" aria-hidden="true">O</span>
-        <div>
+        <div class="brand-logo-wrap">
+          <img class="brand-osjl-logo" src="LOGO/OSJL.png" alt="Ocean State Job Lot logo" decoding="async">
+          <span class="brand-logo-fallback" aria-hidden="true" hidden>OSJL</span>
+        </div>
+        <div class="brand-text">
           <div class="eyebrow">ARROWSTREET / RETAIL RESEARCH</div>
           <h1>Ocean State Job Lot <span>Property Atlas</span></h1>
         </div>
       </div>
-      <div class="top-right">
-        <span class="live-indicator"><span class="live-dot"></span> CSV-linked</span>
-        <span id="updated-label" class="updated-label">Loading data…</span>
-        <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden>
-        <button id="csv-file-button" class="reload-button" type="button" hidden>Choose CSV</button>
-        <button id="reload-button" class="reload-button" type="button" title="Reload the unified CSV">↻ <span>Refresh</span></button>
+      <div class="header-identity-right">
+        <div class="arrowstreet-logo-wrap">
+          <img class="brand-arrowstreet-logo" src="LOGO/arrowstreet.png" alt="Arrowstreet logo" decoding="async">
+          <span class="arrowstreet-logo-fallback" hidden>ARROWSTREET</span>
+        </div>
+        <div class="top-right">
+          <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden>
+          <button id="csv-file-button" class="reload-button" type="button" hidden>Choose CSV</button>
+        </div>
       </div>
     </header>
 
     <div class="tab-strip" role="tablist" aria-label="Research pages">
       <button id="tab-map" class="tab active" role="tab" aria-selected="true" aria-controls="page-map" type="button" data-tab="map"><span class="tab-icon">◉</span> Property Map <span id="tab-map-count" class="tab-count">—</span></button>
       <button id="tab-renovation" class="tab" role="tab" aria-selected="false" aria-controls="page-renovation" type="button" data-tab="renovation"><span class="tab-icon">▦</span> Renovation Review <span id="tab-reno-count" class="tab-count">—</span></button>
+      <button id="tab-improvement" class="tab" role="tab" aria-selected="false" aria-controls="page-improvement" type="button" data-tab="improvement"><span class="tab-icon">▥</span> Improvement Classification <span id="tab-improvement-count" class="tab-count">—</span></button>
+      <button id="tab-typology" class="tab" role="tab" aria-selected="false" aria-controls="page-typology" type="button" data-tab="typology"><span class="tab-icon">◫</span> Property Typology <span id="tab-typology-count" class="tab-count">—</span></button>
       <button id="tab-taxonomy" class="tab" role="tab" aria-selected="false" aria-controls="page-taxonomy" type="button" data-tab="taxonomy"><span class="tab-icon">⑂</span> Ownership &amp; Layout Types <span id="tab-tax-count" class="tab-count">—</span></button>
       <button id="tab-tenant" class="tab" role="tab" aria-selected="false" aria-controls="page-tenant" type="button" data-tab="tenant"><span class="tab-icon">⊞</span> Ownership &amp; Tenant Mix <span id="tab-tenant-count" class="tab-count">—</span></button>
-      <button id="tab-schedule" class="tab" role="tab" aria-selected="false" aria-controls="page-schedule" type="button" data-tab="schedule"><span class="tab-icon">▤</span> Property Schedule <span id="tab-schedule-count" class="tab-count">—</span></button>
+
       <div class="tab-trailing">Northeast &amp; Mid-Atlantic · Portfolio research</div>
     </div>
 
@@ -46,7 +54,7 @@
           <div>
             <div class="section-kicker">01 / SPATIAL DISTRIBUTION</div>
             <h2>Retail stores &amp; property portfolio</h2>
-            <p>All locations in the unified CSV. Hover over a point for property details; click for Google Maps.</p>
+
           </div>
           <div class="intro-number"><strong id="map-total">—</strong><span>LOCATIONS IN DATA</span></div>
         </div>
@@ -55,18 +63,18 @@
             <div class="sidebar-block">
               <label class="control-label" for="map-search">Find a property</label>
               <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="map-search" type="search" placeholder="City, address, tenant, store ID…" autocomplete="off"></div>
-              <p class="map-filter-tip">Use the ownership checkboxes below to show multiple categories together.</p>
+
             </div>
             <div class="sidebar-block legend-block">
               <div class="sidebar-heading legend-title-row"><span>OWNERSHIP TYPES</span><span class="legend-actions"><button id="owner-select-all" type="button">All</button><button id="owner-clear" type="button">None</button></span></div>
               <div id="ownership-legend" class="ownership-legend" role="group" aria-label="Ownership category filters"></div>
               <div class="scope-legend"><div class="scope-legend-title">OWNED PROPERTY SCOPE · MARKER COLORS</div>
-                <div class="scope-key"><i style="background:#146c3d"></i>Entire retail center</div>
-                <div class="scope-key"><i style="background:#8dd0aa"></i>Partial retail center</div>
-                <div class="scope-key"><i style="background:#3c9b67"></i>Single building / parcel</div>
-                <div class="scope-key"><i style="background:#c1d98b"></i>Undetermined</div>
+                <div class="scope-key"><i style="background:#aa1d36"></i>Entire retail center</div>
+                <div class="scope-key"><i style="background:#f19aa9"></i>Partial retail center</div>
+                <div class="scope-key"><i style="background:#d8546d"></i>Single building / parcel</div>
+                <div class="scope-key"><i style="background:#e8b9b7"></i>Undetermined</div>
               </div>
-              <p class="legend-footnote">Both owned categories use green shades. Diamond markers indicate Owned + No OSJL Store. Unknown ownership is gray.</p>
+
             </div>
             <div class="sidebar-block list-block">
               <div class="sidebar-list-head"><span>LOCATIONS</span><span id="map-visible-count">—</span></div>
@@ -86,7 +94,7 @@
           <div>
             <div class="section-kicker">02 / BEFORE &amp; AFTER</div>
             <h2>Renovation &amp; tenant change review</h2>
-            <p>Only properties with a filled <code>Renovation</code> cell are shown. Blank entries are excluded; results update from your CSV.</p>
+
           </div>
           <div class="intro-number"><strong id="reno-total">—</strong><span>CLASSIFIED PROPERTIES</span></div>
         </div>
@@ -101,7 +109,7 @@
               <div><div class="eyebrow">NO VISIBLE IMPROVEMENT REPORTED</div><h3 id="no-improvement-title">No improvement</h3></div>
               <span class="column-count" id="no-improvement-count">—</span>
             </div>
-            <div class="column-description">Items explicitly marked “No improvement” in the unified CSV.</div>
+
             <div id="cards-no-improvement" class="card-stack"></div>
           </section>
           <section class="renovation-column improvements-col" aria-labelledby="improvements-title">
@@ -109,16 +117,64 @@
               <div><div class="eyebrow">DOCUMENTED / OBSERVED CHANGES</div><h3 id="improvements-title">With improvement</h3></div>
               <span class="column-count" id="improvements-count">—</span>
             </div>
-            <div class="column-description">Tenant changes, façade work, site improvements, or other renovation notes.</div>
+
             <div id="cards-improvement" class="card-stack"></div>
           </section>
         </div>
       </section>
 
+      <section id="page-improvement" class="page page-classification page-improvement-classification" role="tabpanel" aria-labelledby="tab-improvement" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">03 / DOCUMENTED SITE &amp; STORE CHANGES</div>
+            <h2>Improvement classification</h2>
+            <p>Eight types of observed improvements, shown side by side. Select any property to view its complete renovation record, images, and satellite map.</p>
+          </div>
+          <div class="intro-number"><strong id="improvement-total">—</strong><span>CLASSIFIED PROPERTIES</span></div>
+        </div>
+        <div class="classification-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="improvement-search" type="search" placeholder="Search project, tenant or improvement…" autocomplete="off"></div>
+          <div class="classification-toolbar-tip">Eight categories · Click a project for details</div>
+        </div>
+        <div class="eight-column-scroller" tabindex="0" aria-label="Eight improvement classification columns, scroll horizontally">
+          <div class="eight-column-grid" id="improvement-columns"></div>
+        </div>
+      </section>
+
+      <section id="page-typology" class="page page-classification page-property-typology" role="tabpanel" aria-labelledby="tab-typology" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">04 / OWNERSHIP × CONFIGURATION × VISIBILITY</div>
+            <h2>Property typology</h2>
+            <p>Eight site types defined by ownership, spatial configuration and visibility.</p>
+          </div>
+          <div class="intro-number"><strong id="typology-total">—</strong><span>CLASSIFIED PROPERTIES</span></div>
+        </div>
+        <div class="classification-toolbar typology-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="typology-search" type="search" placeholder="Search property, tenant or category…" autocomplete="off"></div>
+          <div class="visibility-filters" role="group" aria-label="Show properties by improvement status">
+            <span class="filter-label">SHOW PROJECTS</span>
+            <label><input id="typology-with" type="checkbox" checked> With improvement</label>
+            <label><input id="typology-without" type="checkbox" checked> Without improvement</label>
+          </div>
+          <div class="typology-column-controls" role="group" aria-label="Adjust the width of property typology columns">
+            <span class="classification-toolbar-tip">Scroll horizontally →</span>
+            <button type="button" id="typology-zoom-out" class="typology-size-button" aria-label="Make typology columns narrower" disabled>−</button>
+            <span id="typology-zoom-label" class="typology-zoom-label" aria-live="polite">Fit all 8</span>
+            <button type="button" id="typology-zoom-in" class="typology-size-button" aria-label="Make typology columns wider">+</button>
+          </div>
+        </div>
+        <div id="typology-scroller" class="eight-column-scroller" tabindex="0" aria-label="Eight property typology columns, adjustable width and horizontal scrolling">
+          <div class="ownership-groups eight-column-grid" aria-hidden="true"><div class="ownership-group entire-owned">ENTIRE OWNED · TYPES 01–05</div><div class="ownership-group partial-owned">PARTIAL OWNED · TYPES 06–08</div></div>
+          <div class="eight-column-grid" id="typology-columns"></div>
+        </div>
+        <p class="classification-note">Ownership grouping follows the eight-type framework. Site diagrams are stored in the sibling <code>DIAGRAM/</code> folder. Satellite pins indicate property locations, not legal parcel boundaries.</p>
+      </section>
+
       <section id="page-taxonomy" class="page page-taxonomy" role="tabpanel" aria-labelledby="tab-taxonomy" hidden>
         <div class="page-intro">
           <div>
-            <div class="section-kicker">03 / PORTFOLIO TAXONOMY</div>
+            <div class="section-kicker">05 / PORTFOLIO TAXONOMY</div>
             <h2>Ownership → Retail center layout</h2>
             <p>Explore the portfolio by ownership and retail center layout, with tenant mix, ownership scope, acquisition history, and satellite views.</p>
           </div>
@@ -142,7 +198,7 @@
       <section id="page-tenant" class="page page-taxonomy page-tenant" role="tabpanel" aria-labelledby="tab-tenant" hidden>
         <div class="page-intro">
           <div>
-            <div class="section-kicker">04 / TENANT MIX TAXONOMY</div>
+            <div class="section-kicker">06 / TENANT MIX TAXONOMY</div>
             <h2>Ownership → Tenant mix types</h2>
             <p>Compare the tenant mix across owned and leased properties. Select a category to jump to its property cards, satellite map, and portfolio details.</p>
           </div>
@@ -355,37 +411,17 @@
         <div class="taxonomy-section-head"><div class="section-kicker">PROPERTY COLLECTIONS</div><span id="mix-visible-count" class="tax-visible-count"></span></div>
         <div id="mix-results" class="taxonomy-results"></div>
       </section>
-
-      <section id="page-schedule" class="page page-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
-        <div class="page-intro">
-          <div>
-            <div class="section-kicker">05 / DYNAMIC PROPERTY SCHEDULE</div>
-            <h2>Property schedule &amp; group counts</h2>
-            <p>Compare all projects in one continuous table. Choose up to five grouping fields; every group and subgroup displays its property count, with no rows hidden behind dropdowns.</p>
-          </div>
-          <div class="intro-number"><strong id="schedule-total">—</strong><span>PROPERTIES IN DATA</span></div>
-        </div>
-        <div class="schedule-controls">
-          <div class="schedule-group-controls">
-            <label>GROUP 1 <select id="schedule-group-1" aria-label="First grouping field"></select></label>
-            <label>GROUP 2 <select id="schedule-group-2" aria-label="Second grouping field"></select></label>
-            <label>GROUP 3 <select id="schedule-group-3" aria-label="Third grouping field"></select></label>
-            <label>GROUP 4 <select id="schedule-group-4" aria-label="Fourth grouping field"></select></label>
-            <label>GROUP 5 <select id="schedule-group-5" aria-label="Fifth grouping field"></select></label>
-          </div>
-          <div class="schedule-secondary-controls">
-            <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="schedule-search" type="search" placeholder="Search properties, tenants, locations…" autocomplete="off"></div>
-            <div class="schedule-actions"><button id="schedule-export" type="button">Export CSV</button></div>
-          </div>
-          <p class="schedule-help">Group order applies from left to right. Every shaded row is a visible subtotal; the count is for that group within its parent. No project rows are collapsed. Scroll horizontally for more property fields.</p>
-        </div>
-        <div class="schedule-table-shell">
-          <div class="schedule-table-bar"><strong>PROPERTY SCHEDULE</strong><span id="schedule-visible-count">—</span></div>
-          <div id="schedule-table-scroll" class="schedule-table-scroll"><div id="schedule-results" class="empty-state">Loading properties…</div></div>
-        </div>
-      </section>
     </main>
     <footer class="footer">OSJL Property Atlas <span>·</span> All pages use DATA/OSJL_183_Stores.csv <span>·</span> Historical ownership classifications may require deed verification</footer>
+  </div>
+  <div id="improvement-modal" class="improvement-modal" hidden>
+    <div class="improvement-modal-panel" role="dialog" aria-modal="true" aria-labelledby="improvement-modal-title" tabindex="-1">
+      <header class="improvement-modal-header">
+        <div><span class="section-kicker">PROPERTY RECORD</span><h2 id="improvement-modal-title">Improvement details</h2></div>
+        <button id="improvement-modal-close" class="improvement-modal-close" type="button" aria-label="Close improvement details">×</button>
+      </header>
+      <div id="improvement-modal-content" class="improvement-modal-content"></div>
+    </div>
   </div>
   <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image preview"><button id="lightbox-close" class="lightbox-close" type="button" aria-label="Close preview">×</button><img id="lightbox-img" alt="Enlarged property image"><div id="lightbox-caption" class="lightbox-caption"></div></div>
 </body>

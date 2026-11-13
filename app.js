@@ -6,16 +6,16 @@ const CONFIG={
   defaultZoom:7
 };
 const OWNER_TYPES=[
-  {key:'Owned + OSJL Store',label:'Owned + OSJL Store',color:'#287a50'},
-  {key:'Owned + No OSJL Store',label:'Owned + No OSJL Store',color:'#287a50'},
-  {key:'Leased OSJL Store',label:'Leased OSJL Store',color:'#4285b6'},
-  {key:'Unknown',label:'Unknown / Unverified',color:'#929b9e'}
+  {key:'Owned + OSJL Store',label:'Owned + OSJL Store',color:'#cb3049'},
+  {key:'Owned + No OSJL Store',label:'Owned + No OSJL Store',color:'#cb3049'},
+  {key:'Leased OSJL Store',label:'Leased OSJL Store',color:'#657ba6'},
+  {key:'Unknown',label:'Unknown / Unverified',color:'#9d979b'}
 ];
 // The center ownership scope has a separate visual encoding from tenure.
 // Single Building / Parcel is deliberately NOT assumed to mean Entire or Partial Center.
-const OWNED_SCOPE_COLORS={entire:'#146c3d',partial:'#8dd0aa',single:'#3c9b67',undetermined:'#c1d98b'};
+const OWNED_SCOPE_COLORS={entire:'#aa1d36',partial:'#f19aa9',single:'#d8546d',undetermined:'#e8b9b7'};
 const DISPLAY_FIELDS=[
-  ['Property_Ownership_Type','Ownership type'],['Ownership_Scope','Owned scope'],
+  ['Property_Ownership_Type','Ownership type'],['Ownership_Scope','Owned scope'],['Property_Typology','Property typology'],
   ['Tenant_Mix_Type','Tenant mix'],['Retail_Center_Type','Retail center layout'],
   ['OSJL_Type','OSJL location'],['OSJL_Area_SF','OSJL area','sf'],
   ['Total_GLA_SF','Total GLA','sf'],['Land_Area_Acres','Land area','acres'],
@@ -33,12 +33,6 @@ const PORTFOLIO_FIELDS=[
   ['Known_Property_Owner','Known property owner'],['Acquired_Asset_Type','Acquired asset type'],
   ['Previous_Retail_Use','Previous retail use'],['Space_Availability_Reason','Space availability reason'],
   ['Reported_Purchase_Price_USD','Reported purchase price','usd'],['Tenants','Tenants'],['Notes','Notes']
-];
-const SCHEDULE_FIELDS=[
-  ['Property_Ownership_Type','Ownership type'],['Tenant_Mix_Type','Tenant mix type'],
-  ['Retail_Center_Type','Retail center type'],['Ownership_Scope','Owned scope'],
-  ['OSJL_Type','OSJL type'],['State','State'],['City','City'],
-  ['Renovation_Status','Renovation status']
 ];
 const MIX_ORDER=['OSJL Only','OSJL + Automotive','OSJL + Utility Retail','OSJL + Fitness','OSJL + Convenience','OSJL + Healthcare','OSJL + Mixed Services','Grocery-Anchored Retail','Retail, Services & Experiences','Other'];
 let propertyRows=[],previousCSVText=null;
@@ -120,10 +114,11 @@ function searchable(row) {return Object.values(row).join(' ').toLocaleLowerCase(
 function labelLocationCount(n) {return n.toLocaleString('en-US');}
 
 function setTab(tab){
-  if(!['map','renovation','taxonomy','tenant','schedule'].includes(tab))return;
+  if(!['map','renovation','improvement','typology','taxonomy','tenant'].includes(tab))return;
+  if(tab!==activeTab)closeImprovementModal(false);
   if(activeTab!==tab)disposeCardMaps();
   activeTab=tab;
-  for(const name of ['map','renovation','taxonomy','tenant','schedule'])$('page-'+name).hidden=name!==tab;
+  for(const name of ['map','renovation','improvement','typology','taxonomy','tenant'])$('page-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(btn=>{
     const active=btn.dataset.tab===tab;
     btn.classList.toggle('active',active);
@@ -131,6 +126,8 @@ function setTab(tab){
   });
   if(tab==='map'&&map)setTimeout(()=>map.invalidateSize(),50);
   if(tab==='renovation')renderRenovation();
+  if(tab==='improvement')renderImprovementClassification();
+  if(tab==='typology')renderPropertyTypology();
   if(tab==='taxonomy')renderTaxonomy();
   if(tab==='tenant')renderTenantMix();
   if(tab==='schedule')renderSchedule();
@@ -379,7 +376,7 @@ function mountCardSatellite(element) {
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
     maxZoom:19,attribution:'Imagery © Esri and contributors'
   }).addTo(instance);
-  L.circleMarker([lat,lng],{radius:6,color:'#fff',weight:2.5,fillColor:'#147c70',fillOpacity:1,interactive:false}).addTo(instance);
+  L.circleMarker([lat,lng],{radius:6,color:'#fff',weight:2.5,fillColor:'#c82c44',fillOpacity:1,interactive:false}).addTo(instance);
   element.dataset.mapLoaded='true';cardMaps.push(instance);
   requestAnimationFrame(()=>{if(element.isConnected)instance.invalidateSize();});
 }
@@ -440,6 +437,351 @@ function renderRenovation(){
   observeCardSatellites('page-renovation');
 }
 
+
+// ===== Eight-column classification pages =====
+// The CSV field is intentionally spelled "Renovetion" as in the user's data.
+const IMPROVEMENT_TYPES=[
+  {field:'Tenant_Replacement_Storefront_Renovetion',label:'Tenant Replacement + Storefront Renovation',description:'A new tenant may reshape a storefront or building frontage, with related changes to paving, striping, sidewalks or parking.'},
+  {field:'Pavement',label:'Pavement',description:'Restriping, new paving, parking reconfiguration or sidewalk widening.'},
+  {field:'Storefront Repainting',label:'Storefront Repainting',description:'Changes to storefront or column colors without changing the form of the façade.'},
+  {field:'Pad Site Modification',label:'Pad Site Modification',description:'Addition of a roadside pad site or façade and storefront improvements to an existing pad-site building.'},
+  {field:'OSJL Relocation',label:'OSJL Relocation',description:'OSJL moves to a different space within the same retail center after acquisition.'},
+  {field:'Landscape Removal',label:'Landscape Removal',description:'Removal of trees or shrubs, often to improve visibility from the road.'},
+  {field:'Outdoor Seating Addition',label:'Outdoor Seating Addition',description:'Restaurant seating is added in an outdoor area, sometimes by repurposing part of a parking lot.'},
+  {field:'OSJL Architectural Feature Removal',label:'OSJL Architectural Feature Removal',description:'Removal of arcades, decorative towers or other façade features when OSJL occupies a store.'}
+];
+const TYPOLOGY_TYPES=[
+  {name:'Single-Tenant Standalone',diagram:'SingleTenant_Standalone.jpg',description:'One standalone OSJL building on a defined property, owned in its entirety by OSJL.',improvements:["Pad Site Modification"]},
+  {name:'Multi-Tenant Big-Box',diagram:'MultiTenant_BigBox.jpg',description:'A single large-format building shared by OSJL and a few additional tenants; OSJL owns the entire property.',improvements:["Tenant Replacement + Storefront Renovation"]},
+  {name:'Wide-Frontage Inline Center',diagram:'WideFrontage_Inline_Center.jpg',description:'A linear or L-shaped center with its long edge along the road, giving most storefronts strong road exposure. Pad sites may sit in front.',improvements:["OSJL Relocation","Tenant Replacement + Storefront Renovation","Landscape Removal","Pad Site Modification","Outdoor Seating Addition","Storefront Repainting"]},
+  {name:'Deep-Lot Inline Center',diagram:'DeepLot_Inline_Center.jpg',description:'A narrow road frontage and deep site place some storefronts farther from traffic. Buildings may be linear or L-shaped.',improvements:["Landscape Removal","Pad Site Modification","Pavement","Tenant Replacement + Storefront Renovation"]},
+  {name:'Low-Visibility Retail Center',diagram:'LowVisibility_Retail_Center.jpg',description:'Setbacks, grade changes or screening by other buildings or site features limit visibility from the main road.',improvements:["Tenant Replacement + Storefront Renovation","Pavement"]},
+  {name:'Partially Owned Inline Center',diagram:'Partially_Owned_Inline_Center.jpg',description:'A connected linear or L-shaped retail center in which OSJL owns only part of the property; pad sites may also be present.',improvements:["OSJL Relocation","Tenant Replacement + Storefront Renovation","Pad Site Modification","Landscape Removal","Pavement"]},
+  {name:'Partially Owned Retail Cluster',diagram:'Partially_Owned_Retail_Cluster.jpg',description:'Several separate retail buildings share a site and generally face the road. OSJL owns only a portion of the complex.',improvements:["Storefront Repainting"]},
+  {name:'Large-Scale Retail Complex',diagram:'LargeScale_Retail_Complex.jpg',description:'A large complex with numerous stores and big-box anchors. Internal buildings are often difficult to see from the main road.',improvements:["Pavement","Tenant Replacement + Storefront Renovation"]}
+];
+// Keep each improvement method in a consistent horizontal row in all eight
+// Property Typology columns. Only methods listed in the typology summaries
+// are included; blanks are intentional comparison cells.
+const TYPOLOGY_METHOD_ORDER=IMPROVEMENT_TYPES
+  .map(item=>item.label)
+  .filter(label=>TYPOLOGY_TYPES.some(type=>type.improvements.includes(label)));
+function typologyMethodGrid(type){
+  const applicable=new Set(type.improvements);
+  return TYPOLOGY_METHOD_ORDER.map((label,index)=>
+    `<div class="typology-method-slot" data-method-row="${index+1}"${applicable.has(label)?'': ' aria-hidden="true"'}>`+
+      (applicable.has(label)?classificationChip(label,'method'):'')+`</div>`
+  ).join('');
+}
+function improvementTypesForRow(row){
+  const found=IMPROVEMENT_TYPES.filter(item=>str(row[item.field])==='1');
+  // Earlier uploaded CSVs predate the two newest classification columns.
+  // On those files only, infer the two types from the original narrative.
+  if(!Object.hasOwn(row,'Outdoor Seating Addition') && /outdoor (?:dining|seating)/i.test(str(row.Renovation)))found.push(IMPROVEMENT_TYPES[6]);
+  if(!Object.hasOwn(row,'OSJL Architectural Feature Removal') && !Object.hasOwn(row,'Architectural Feature Removal') &&
+    /(?:arcade removal|removal of (?:decorative|.*cupola).*tower)/i.test(str(row.Renovation)))found.push(IMPROVEMENT_TYPES[7]);
+  if(!Object.hasOwn(row,'OSJL Architectural Feature Removal') && str(row['Architectural Feature Removal'])==='1' && !found.includes(IMPROVEMENT_TYPES[7]))found.push(IMPROVEMENT_TYPES[7]);
+  return found;
+}
+function hasClassifiedImprovement(row){
+  return renovationCategory(row.Renovation)==='yes'||improvementTypesForRow(row).length>0;
+}
+function classificationChip(label,kind){
+  return `<span class="classification-chip classification-chip-${kind}">${escapeHTML(label)}</span>`;
+}
+function classificationCard(row,serial){
+  const card=document.createElement('article');
+  card.className='classification-project-card';
+  const location=displayTitle(row),address=shortAddress(row);
+  const categories=improvementTypesForRow(row);
+  const tags=[
+    ...categories.map(t=>classificationChip(t.label,'improvement')),
+    str(row.Tenant_Mix_Type)?classificationChip(row.Tenant_Mix_Type,'mix'):'',
+    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):''
+  ].join('');
+  const lat=Number(row.Latitude),lng=Number(row.Longitude);
+  const valid=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+  const satellite=valid?
+    `<div class="classification-satellite card-satellite-map" data-lat="${lat}" data-lng="${lng}" data-zoom="15" aria-label="Satellite map of ${escapeHTML(location)}"></div>`:
+    '<div class="classification-satellite classification-satellite-missing">Satellite coordinates not available</div>';
+  const omitted=new Set(['Tenant_Mix_Type','Ownership_Scope','Property_Typology','Tenants']);
+  const extra=[
+    ['Retail_Center_Type','Retail center layout'],
+    ['OSJL_Type','OSJL position'],
+    ['Property_Ownership_Type','Property ownership type'],
+    ['Renovation','Renovation details'],
+    ['Acquisition_Year','Acquisition year'],
+    ['Lease_Start_or_Transfer_Year','Lease / transfer year'],
+    ['OSJL_Area_SF','OSJL area','sf'],
+    ['Total_GLA_SF','Total GLA','sf'],
+    ['Land_Area_Acres','Land area','acres'],
+    ['Reported_Purchase_Price_USD','Purchase price','usd'],
+    ['Known_Property_Owner','Known property owner'],
+    ['Previous_Retail_Use','Previous retail use'],
+    ['Acquired_Asset_Type','Acquired asset type'],
+    ['Space_Availability_Reason','Space availability reason'],
+    ['Notes','Notes']
+  ].filter(([key])=>str(row[key]) && !omitted.has(key));
+  const fields=extra.map(([key,label,kind])=>`<div class="classification-detail-field"><dt>${escapeHTML(label)}</dt><dd>${escapeHTML(formatted(row[key],kind))}</dd></div>`).join('');
+  const sources=[['Acquisition_Source_URL','Acquisition source'],['Secondary_Source_URL','Secondary source']]
+    .filter(([key])=>/^https?:\/\//i.test(str(row[key])))
+    .map(([key,label])=>`<a href="${escapeHTML(row[key])}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join('');
+  card.innerHTML=`${satellite}
+    <div class="classification-card-main">
+      <div class="classification-id">${escapeHTML(rowId(row))}</div>
+      <h4>${escapeHTML(location)}</h4>
+      <div class="classification-tags">${tags||'<span class="classification-no-tags">No classification labels documented</span>'}</div>
+    </div>
+    <details class="classification-more">
+      <summary>More info <span aria-hidden="true">⌄</span></summary>
+      <div class="classification-more-body">
+        <div class="classification-full-address"><strong>ADDRESS</strong><span>${escapeHTML(address||'—')}</span></div>
+        ${str(row.Tenants)?`<div class="classification-tenants"><strong>TENANTS</strong><span>${escapeHTML(row.Tenants)}</span></div>`:''}
+        <dl class="classification-detail-list">${fields}</dl>
+        <div class="card-media-slot"></div>
+        <div class="classification-links"><a href="${escapeHTML(safeLink(address,row))}" target="_blank" rel="noopener noreferrer">Google Maps ↗</a>${sources}</div>
+      </div>
+    </details>`;
+  const details=card.querySelector('.classification-more');
+  details.addEventListener('toggle',()=>{
+    if(details.open && !details.dataset.mediaRequested){
+      details.dataset.mediaRequested='true';
+      addMediaToCard(card,row,serial).catch(e=>console.warn('Classification media:',e));
+    }
+    if(details.open){cardMaps.forEach(m=>m.invalidateSize());}
+  });
+  return card;
+}
+
+// Property Typology has its own condensed card design. Do not modify
+// classificationCard(): Improvement Classification intentionally keeps its layout.
+function propertyTypologyCard(row,serial){
+  const card=document.createElement('article');
+  card.className='classification-project-card typology-project-card';
+  const location=displayTitle(row),address=shortAddress(row);
+  const categories=improvementTypesForRow(row);
+  // Only three kinds of summary chips: improvement types, tenant mix, ownership scope.
+  // Omit a kind when the CSV provides no value; never invent a classification.
+  const chips=[
+    ...categories.map(item=>classificationChip(item.label,'improvement')),
+    str(row.Tenant_Mix_Type)?classificationChip(row.Tenant_Mix_Type,'mix'):'',
+    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):''
+  ].filter(Boolean).join('');
+  const lat=Number(row.Latitude),lng=Number(row.Longitude);
+  const hasCoords=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+  const satellite=hasCoords
+    ? `<div class="classification-satellite card-satellite-map" data-lat="${lat}" data-lng="${lng}" data-zoom="15" role="region" aria-label="Satellite map of ${escapeHTML(location)}"></div>`
+    : '<div class="classification-satellite classification-satellite-missing">Satellite coordinates not available</div>';
+
+  // These values appear only after expansion. In particular, avoid duplicating
+  // the improvement-type, tenant-mix and ownership-scope chips above.
+  const moreFields=[
+    ['Retail_Center_Type','Retail center layout'],
+    ['Tenants','Tenants'],
+    ['OSJL_Type','OSJL position'],
+    ['Property_Ownership_Type','Property ownership type'],
+    ['Renovation','Renovation details'],
+    ['Acquisition_Year','Acquisition year'],
+    ['Lease_Start_or_Transfer_Year','Lease / transfer year'],
+    ['OSJL_Area_SF','OSJL area','sf'],
+    ['Total_GLA_SF','Total GLA','sf'],
+    ['Land_Area_Acres','Land area','acres'],
+    ['Reported_Purchase_Price_USD','Reported purchase price','usd'],
+    ['Known_Property_Owner','Known property owner'],
+    ['Previous_Retail_Use','Previous retail use'],
+    ['Acquired_Asset_Type','Acquired asset type'],
+    ['Space_Availability_Reason','Space availability reason'],
+    ['Notes','Notes'],
+    ['Store_ID','Store ID'],
+    ['Property_Record_ID','Property record ID']
+  ].filter(([key])=>str(row[key]));
+  const details=moreFields.map(([key,label,kind])=>
+    `<div class="classification-detail-field"><dt>${escapeHTML(label)}</dt><dd>${escapeHTML(formatted(row[key],kind))}</dd></div>`
+  ).join('');
+  const sources=[['Acquisition_Source_URL','Acquisition source'],['Secondary_Source_URL','Secondary source']]
+    .filter(([key])=>/^https?:\/\//i.test(str(row[key])))
+    .map(([key,label])=>`<a href="${escapeHTML(row[key])}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join('');
+
+  card.innerHTML=`${satellite}
+    <div class="classification-card-main typology-card-main">
+      <h4>${escapeHTML(location)}</h4>
+      ${chips?`<div class="classification-tags typology-summary-tags">${chips}</div>`:''}
+    </div>
+    <details class="classification-more typology-more">
+      <summary>More info <span aria-hidden="true">⌄</span></summary>
+      <div class="classification-more-body">
+        <div class="classification-full-address"><strong>ADDRESS</strong><span>${escapeHTML(address||'—')}</span></div>
+        <dl class="classification-detail-list">${details}</dl>
+        <div class="card-media-slot"></div>
+        <div class="classification-links"><a href="${escapeHTML(safeLink(address,row))}" target="_blank" rel="noopener noreferrer">Google Maps ↗</a>${sources}</div>
+      </div>
+    </details>`;
+  const more=card.querySelector('.typology-more');
+  more.addEventListener('toggle',()=>{
+    if(more.open&&!more.dataset.mediaRequested){
+      more.dataset.mediaRequested='true';
+      addMediaToCard(card,row,serial).catch(e=>console.warn('Typology media:',e));
+    }
+  });
+  return card;
+}
+
+function addClassificationCards(target,rows,serial,cardRenderer=classificationCard){
+  if(!rows.length){target.innerHTML='<p class="classification-column-empty">No matching projects.</p>';return;}
+  const ordered=[...rows].sort((a,b)=>displayTitle(a).localeCompare(displayTitle(b)));
+  for(const row of ordered)target.appendChild(cardRenderer(row,serial));
+}
+function makeClassificationColumn(index,title,description,number,extraClass=''){
+  const col=document.createElement('section');
+  col.className=`classification-column ${extraClass}`;
+  col.innerHTML=`<div class="classification-column-head"><span class="classification-column-number">${String(index+1).padStart(2,'0')}</span><span class="classification-column-count">${number} ${number===1?'property':'properties'}</span><h3>${escapeHTML(title)}</h3><p>${escapeHTML(description)}</p></div><div class="classification-cards"></div>`;
+  return col;
+}
+// A compact project list for the eight-column overview. The original full
+// classificationCard() is reused only inside the detail modal.
+function improvementListButton(row){
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='improvement-list-item';
+  button.dataset.recordIndex=String(propertyRows.indexOf(row));
+  button.setAttribute('aria-label',`View improvement details for ${displayTitle(row)}, ${shortAddress(row)}`);
+  button.innerHTML=`<strong>${escapeHTML(displayTitle(row))}</strong><span>${escapeHTML(shortAddress(row))}</span>`;
+  return button;
+}
+let modalReturnFocus=null;
+let modalSatellite=null;
+function openImprovementModal(row){
+  if(!row)return;
+  closeImprovementModal(false);
+  const overlay=$('improvement-modal');
+  modalReturnFocus=document.activeElement;
+  $('improvement-modal-title').textContent=displayTitle(row);
+  const body=$('improvement-modal-content');
+  body.replaceChildren();
+  const card=classificationCard(row,renderSerial);
+  body.appendChild(card);
+  overlay.hidden=false;
+  document.body.classList.add('modal-open');
+  // The detail view opens in full; no second "More info" click is required.
+  const details=card.querySelector('.classification-more');
+  details.open=true;
+  const satellite=card.querySelector('.card-satellite-map');
+  requestAnimationFrame(()=>{
+    if(overlay.hidden || !satellite || !satellite.isConnected)return;
+    mountCardSatellite(satellite);
+    modalSatellite=cardMaps.find(m=>m.getContainer()===satellite)||null;
+    if(modalSatellite)modalSatellite.invalidateSize();
+  });
+  $('improvement-modal-close').focus();
+}
+function closeImprovementModal(restoreFocus=true){
+  const overlay=$('improvement-modal');
+  if(!overlay || overlay.hidden)return;
+  overlay.hidden=true;
+  document.body.classList.remove('modal-open');
+  if(modalSatellite){
+    const instance=modalSatellite;
+    cardMaps=cardMaps.filter(m=>m!==instance);
+    instance.remove();
+    modalSatellite=null;
+  }
+  $('improvement-modal-content').replaceChildren();
+  if(restoreFocus && modalReturnFocus?.isConnected)modalReturnFocus.focus();
+  modalReturnFocus=null;
+}
+function renderImprovementClassification(){
+  const search=$('improvement-search').value.trim().toLowerCase();
+  const all=propertyRows.filter(row=>improvementTypesForRow(row).length);
+  $('improvement-total').textContent=labelLocationCount(all.length);
+  $('tab-improvement-count').textContent=labelLocationCount(all.length);
+  const filtered=all.filter(row=>!search||searchable(row).includes(search));
+  const serial=++renderSerial;
+  disposeCardMaps();
+  const target=$('improvement-columns');target.replaceChildren();
+  IMPROVEMENT_TYPES.forEach((type,index)=>{
+    const rows=filtered.filter(row=>improvementTypesForRow(row).includes(type));
+    const column=makeClassificationColumn(index,type.label,type.description,rows.length);
+    const list=column.querySelector('.classification-cards');
+    if(!rows.length){list.innerHTML='<p class="classification-column-empty">No matching projects.</p>';}
+    else for(const row of [...rows].sort((a,b)=>displayTitle(a).localeCompare(displayTitle(b)))){
+      list.appendChild(improvementListButton(row));
+    }
+    target.appendChild(column);
+  });
+}
+function diagramMarkup(diagram,name){
+  // User's eight JPEGs live in DIAGRAM, alongside DATA, never inside DATA.
+  const src='DIAGRAM/'+encodeURIComponent(diagram);
+  return `<div class="typology-diagram"><img src="${escapeHTML(src)}" loading="lazy" alt="${escapeHTML(name)} site layout diagram" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="diagram-unavailable" hidden>Diagram not found<br><small>DIAGRAM/${escapeHTML(diagram)}</small></span></div>`;
+}
+const TYPOLOGY_SCALES=[1,1.25,1.5,1.75,2,2.5];
+let typologySizeStep=0;
+function updateTypologySize(){
+  const scroller=$('typology-scroller');
+  if(!scroller)return;
+  const scale=TYPOLOGY_SCALES[typologySizeStep];
+  scroller.classList.toggle('typology-zoomed',typologySizeStep>0);
+  if(typologySizeStep){
+    const width=Math.max(1,scroller.clientWidth);
+    const gap=8;
+    const fit=(width-7*gap)/8;
+    scroller.style.setProperty('--typology-column-width',`${Math.round(Math.max(95,fit)*scale)}px`);
+  }else scroller.style.removeProperty('--typology-column-width');
+  $('typology-zoom-label').textContent=typologySizeStep===0?'Fit all 8':`${Math.round(scale*100)}%`;
+  $('typology-zoom-out').disabled=typologySizeStep===0;
+  $('typology-zoom-in').disabled=typologySizeStep===TYPOLOGY_SCALES.length-1;
+  // Satellite tiles need to update after a column resizes.
+  requestAnimationFrame(()=>cardMaps.forEach(m=>{if(m.getContainer().isConnected)m.invalidateSize();}));
+}
+function adjustTypologySize(delta){
+  typologySizeStep=Math.min(TYPOLOGY_SCALES.length-1,Math.max(0,typologySizeStep+delta));
+  updateTypologySize();
+}
+function renderPropertyTypology(){
+  const search=$('typology-search').value.trim().toLowerCase();
+  const withImprovement=$('typology-with').checked;
+  const withoutImprovement=$('typology-without').checked;
+  const assigned=propertyRows.filter(row=>TYPOLOGY_TYPES.some(t=>t.name===str(row.Property_Typology)));
+  $('typology-total').textContent=labelLocationCount(assigned.length);
+  $('tab-typology-count').textContent=labelLocationCount(assigned.length);
+  const filtered=assigned.filter(row=>(!search||searchable(row).includes(search))&&
+    (hasClassifiedImprovement(row)?withImprovement:withoutImprovement));
+  const serial=++renderSerial;
+  disposeCardMaps();
+  const target=$('typology-columns');target.replaceChildren();
+  // Every column occupies the same eight CSS subgrid rows.  This keeps the
+  // description baseline, improvement methods, With/Without headers and the
+  // right-aligned counts perfectly level across all eight typologies, even
+  // when a column has fewer chips or project cards.
+  TYPOLOGY_TYPES.forEach((type,index)=>{
+    const rows=filtered.filter(row=>str(row.Property_Typology)===type.name);
+    const improved=rows.filter(hasClassifiedImprovement);
+    const unimproved=rows.filter(row=>!hasClassifiedImprovement(row));
+    const column=document.createElement('section');
+    column.className='classification-column typology-aligned-column '+(index<5?'owned-entire':'owned-partial');
+    column.innerHTML=`
+      <div class="typology-aligned-title">
+        <div class="typology-aligned-titleline"><span class="classification-column-number">${String(index+1).padStart(2,'0')}</span>
+          <span class="classification-column-count">${rows.length} ${rows.length===1?'property':'properties'}</span></div>
+        <h3>${escapeHTML(type.name)}</h3>
+      </div>
+      ${diagramMarkup(type.diagram,type.name)}
+      <p class="typology-aligned-description">${escapeHTML(type.description)}</p>
+      <div class="typology-methods">
+        <div class="typology-methods-label">IMPROVEMENT METHODS</div>
+        <div class="typology-method-chips">${typologyMethodGrid(type)}</div>
+      </div>
+      <h4 class="classification-status-heading with-status typology-aligned-status" ${withImprovement?'':'hidden'}>WITH IMPROVEMENT <b>${improved.length}</b></h4>
+      <div class="typology-aligned-projects typology-projects-with" ${withImprovement?'':'hidden'}></div>
+      <h4 class="classification-status-heading without-status typology-aligned-status" ${withoutImprovement?'':'hidden'}>WITHOUT IMPROVEMENT <b>${unimproved.length}</b></h4>
+      <div class="typology-aligned-projects typology-projects-without" ${withoutImprovement?'':'hidden'}></div>`;
+    if(withImprovement)addClassificationCards(column.querySelector('.typology-projects-with'),improved,serial,propertyTypologyCard);
+    if(withoutImprovement)addClassificationCards(column.querySelector('.typology-projects-without'),unimproved,serial,propertyTypologyCard);
+    target.appendChild(column);
+  });
+  observeCardSatellites('page-typology');
+}
+
 // ===== Ownership → layout hierarchy, derived entirely from the unified CSV =====
 const layoutName = row => str(row.Retail_Center_Type) || 'Unclassified Layout';
 function fillLayoutFilter() {
@@ -447,6 +789,19 @@ function fillLayoutFilter() {
   const names=[...new Set(propertyRows.map(layoutName))].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
   select.innerHTML='<option value="all">All layout types</option>'+names.map(name=>`<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
   select.value=[...select.options].some(option=>option.value===old)?old:'all';
+}
+function scheduleGroupSort(a,b,key){
+  if(key==='Property_Ownership_Type'){
+    const ai=OWNER_TYPES.findIndex(x=>x.key===a),bi=OWNER_TYPES.findIndex(x=>x.key===b);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  }
+  if(key==='Tenant_Mix_Type'){
+    const ai=MIX_ORDER.indexOf(a),bi=MIX_ORDER.indexOf(b);
+    return (ai<0?99:ai)-(bi<0?99:bi)||a.localeCompare(b);
+  }
+  if(a==='Not documented')return 1;
+  if(b==='Not documented')return -1;
+  return a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
 }
 function fillMixFilter(){
   const types=[...new Set(propertyRows.map(row=>str(row.Tenant_Mix_Type)||'Not documented'))]
@@ -630,142 +985,6 @@ function jumpToTaxonomyBranch(event) {
   // Newly opened layout branches can reveal maps that were outside the observer's viewport.
   setTimeout(()=>cardMaps.forEach(m=>m.invalidateSize()),220);
 }
-// ===== Fourth tab: multi-level, Revit-style property schedule =====
-function fillScheduleSelectors(){
-  const options='<option value="">No grouping</option>'+SCHEDULE_FIELDS.map(([key,label])=>
-    `<option value="${escapeHTML(key)}">${escapeHTML(label)}</option>`).join('');
-  const defaults=['Property_Ownership_Type','Tenant_Mix_Type','Retail_Center_Type'];
-  for(let i=1;i<=5;i++){
-    const select=$('schedule-group-'+i),value=select.value||defaults[i-1];
-    select.innerHTML=options;
-    select.value=value;
-  }
-}
-function effectiveScheduleFields(){
-  const result=[];
-  for(let i=1;i<=5;i++){
-    const value=$('schedule-group-'+i).value;
-    if(value&&!result.includes(value))result.push(value);
-  }
-  return result;
-}
-function scheduleGroupValue(row,key){
-  if(key==='Renovation_Status'){
-    return {'yes':'With improvement','no':'No improvement','blank':'Not documented'}[renovationCategory(row.Renovation)];
-  }
-  if(key==='Property_Ownership_Type')return str(row[key])||'Unknown / Unverified';
-  return str(row[key])||'Not documented';
-}
-function scheduleFilter(row){
-  const query=$('schedule-search').value.trim().toLocaleLowerCase();
-  return !query||searchable(row).includes(query);
-}
-function scheduleGroupKey(path){return JSON.stringify(path);}
-function scheduleGroupSort(a,b,key){
-  if(key==='Property_Ownership_Type'){
-    const ai=OWNER_TYPES.findIndex(x=>x.key===a);
-    const bi=OWNER_TYPES.findIndex(x=>x.key===b);
-    return (ai<0?99:ai)-(bi<0?99:bi);
-  }
-  if(key==='Tenant_Mix_Type'){
-    const ai=MIX_ORDER.indexOf(a),bi=MIX_ORDER.indexOf(b);
-    return (ai<0?99:ai)-(bi<0?99:bi)||a.localeCompare(b);
-  }
-  if(a==='Not documented')return 1;
-  if(b==='Not documented')return -1;
-  return a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
-}
-const SCHEDULE_COLS=[
-  ['Store_ID','Project'],['City','City'],['State','State'],['Street_Address','Street address'],
-  ['Property_Ownership_Type','Ownership type'],['Ownership_Scope','Ownership scope'],
-  ['Tenant_Mix_Type','Tenant mix'],['Retail_Center_Type','Retail center'],
-  ['OSJL_Type','OSJL position'],['OSJL_Area_SF','OSJL area (SF)'],
-  ['Total_GLA_SF','Total GLA (SF)'],['Acquisition_Year','Acquisition year'],
-  ['Lease_Start_or_Transfer_Year','Lease year'],['Known_Property_Owner','Known owner'],
-  ['Tenants','Tenants'],['Renovation','Renovation'],['Satellite','Satellite map']
-];
-function schedulePropertyRow(row){
-  const addr=shortAddress(row),lat=Number(row.Latitude),lng=Number(row.Longitude);
-  const valid=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
-  const project=`<strong>${escapeHTML(rowId(row))}</strong><span>${escapeHTML(displayTitle(row))}</span>`;
-  const owner=isOwned(row.Property_Ownership_Type)
-    ?`<span class="schedule-scope-chip" style="--scope-color:${rowColor(row)}">${escapeHTML(scopeShort(row.Ownership_Scope))}</span>`
-    :escapeHTML(str(row.Ownership_Scope)||'—');
-  const mapCell=valid?`<div class="card-satellite-map schedule-mini-map" data-lat="${lat}" data-lng="${lng}" data-zoom="16" role="img" aria-label="Satellite map of ${escapeHTML(displayTitle(row))}"></div>
-    <a href="${escapeHTML(safeLink(addr,row))}" target="_blank" rel="noopener noreferrer" class="schedule-google-link">Google Maps ↗</a>`:'<span class="missing-value">No coordinates</span>';
-  const values=[
-    `<div class="schedule-project-cell">${project}</div>`,escapeHTML(str(row.City)||'—'),
-    escapeHTML(str(row.State)||'—'),escapeHTML(addr),
-    escapeHTML(str(row.Property_Ownership_Type)||'Unknown / Unverified'),owner,
-    escapeHTML(str(row.Tenant_Mix_Type)||'—'),escapeHTML(str(row.Retail_Center_Type)||'—'),
-    escapeHTML(str(row.OSJL_Type)||'—'),escapeHTML(formatted(row.OSJL_Area_SF,'sf')),
-    escapeHTML(formatted(row.Total_GLA_SF,'sf')),escapeHTML(str(row.Acquisition_Year)||'—'),
-    escapeHTML(str(row.Lease_Start_or_Transfer_Year)||'—'),
-    escapeHTML(str(row.Known_Property_Owner)||'—'),
-    `<span class="schedule-long-cell" title="${escapeHTML(str(row.Tenants))}">${escapeHTML(str(row.Tenants)||'—')}</span>`,
-    `<span class="schedule-long-cell" title="${escapeHTML(str(row.Renovation))}">${escapeHTML(str(row.Renovation)||'—')}</span>`,mapCell
-  ];
-  return `<tr class="schedule-data-row">${values.map((v,i)=>`<td class="${i===0?'schedule-sticky-cell':''} ${i===16?'schedule-satellite-cell':''}">${v}</td>`).join('')}</tr>`;
-}
-function renderSchedule(){
-  const filtered=propertyRows.filter(scheduleFilter);
-  const fields=effectiveScheduleFields();
-  const scroll=$('schedule-table-scroll'),left=scroll.scrollLeft,top=scroll.scrollTop;
-  const count=filtered.length;
-  $('schedule-visible-count').textContent=`${labelLocationCount(count)} of ${labelLocationCount(propertyRows.length)} properties · ${fields.length} grouping levels`;
-  $('schedule-total').textContent=labelLocationCount(propertyRows.length);
-  $('tab-schedule-count').textContent=labelLocationCount(propertyRows.length);
-  disposeCardMaps();
-  const groupTitle=key=>SCHEDULE_FIELDS.find(([name])=>name===key)?.[1]||key;
-  function groupedRows(rows,level){
-    if(level>=fields.length){
-      return [...rows].sort((a,b)=>str(a.State).localeCompare(str(b.State))||str(a.City).localeCompare(str(b.City))||rowId(a).localeCompare(rowId(b)))
-        .map(schedulePropertyRow).join('');
-    }
-    const key=fields[level],groups=new Map();
-    for(const row of rows){
-      const value=scheduleGroupValue(row,key);
-      if(!groups.has(value))groups.set(value,[]);
-      groups.get(value).push(row);
-    }
-    return [...groups.keys()].sort((a,b)=>scheduleGroupSort(a,b,key)).map(value=>{
-      const group=groups.get(value);
-      // Always visible, just like a Revit schedule grouping subtotal — no disclosure control.
-      const summary=`<tr class="schedule-group-row schedule-level-${level+1}">
-        <th scope="rowgroup" class="schedule-group-heading-cell schedule-sticky-cell" style="--schedule-indent:${level*11}px">
-          <small>GROUP ${level+1} · ${escapeHTML(groupTitle(key))}</small><strong>${escapeHTML(value)}</strong></th>
-        <td class="schedule-group-total-cell"><b>${group.length}</b><span>${group.length===1?'property':'properties'}</span></td>
-        <td colspan="${SCHEDULE_COLS.length-2}" class="schedule-group-fill-cell"></td></tr>`;
-      return summary+groupedRows(group,level+1);
-    }).join('');
-  }
-  const header=`<thead><tr>${SCHEDULE_COLS.map(([key,label],i)=>`<th class="${i===0?'schedule-sticky-cell':''}">${escapeHTML(label)}</th>`).join('')}</tr></thead>`;
-  const rows=count?(fields.length?groupedRows(filtered,0):[...filtered].sort((a,b)=>str(a.State).localeCompare(str(b.State))||str(a.City).localeCompare(str(b.City))).map(schedulePropertyRow).join(''))
-    :`<tr><td colspan="${SCHEDULE_COLS.length}" class="schedule-empty-cell">No matching portfolio properties.</td></tr>`;
-  $('schedule-results').innerHTML=`<table class="property-schedule">${header}<tbody>${rows}</tbody></table>`;
-  scroll.scrollLeft=left;scroll.scrollTop=top;
-  observeCardSatellites('page-schedule');
-}
-function exportScheduleCSV(){
-  const rows=propertyRows.filter(scheduleFilter);
-  const fields=effectiveScheduleFields();
-  rows.sort((a,b)=>{
-    for(const key of fields){
-      const compare=scheduleGroupSort(scheduleGroupValue(a,key),scheduleGroupValue(b,key),key);
-      if(compare)return compare;
-    }
-    return str(a.State).localeCompare(str(b.State))||str(a.City).localeCompare(str(b.City));
-  });
-  const columns=['Store_ID','Property_Record_ID','Record_Type','City','State','Street_Address','Property_Ownership_Type','Ownership_Scope',
-    'Tenant_Mix_Type','Retail_Center_Type','OSJL_Type','OSJL_Area_SF','Total_GLA_SF','Acquisition_Year',
-    'Lease_Start_or_Transfer_Year','Known_Property_Owner','Tenants','Renovation','Latitude','Longitude'];
-  const csvCell=value=>'"'+String(value??'').replaceAll('"','""')+'"';
-  const content='\uFEFF'+[columns.join(','),...rows.map(row=>columns.map(key=>csvCell(row[key])).join(','))].join('\r\n');
-  const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
-  const anchor=document.createElement('a');anchor.href=url;anchor.download='OSJL_Property_Schedule.csv';
-  document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-
 function paintHeader(){
   $('map-total').textContent=labelLocationCount(propertyRows.length);
   $('tab-map-count').textContent=labelLocationCount(propertyRows.length);
@@ -776,8 +995,10 @@ function paintHeader(){
   $('tax-total').textContent=labelLocationCount(propertyRows.length);
   $('tab-tenant-count').textContent=labelLocationCount(propertyRows.length);
   $('mix-total').textContent=labelLocationCount(propertyRows.length);
-  $('tab-schedule-count').textContent=labelLocationCount(propertyRows.length);
-  $('schedule-total').textContent=labelLocationCount(propertyRows.length);
+  $('tab-improvement-count').textContent=labelLocationCount(propertyRows.filter(r=>improvementTypesForRow(r).length).length);
+  $('improvement-total').textContent=$('tab-improvement-count').textContent;
+  $('tab-typology-count').textContent=labelLocationCount(propertyRows.filter(r=>TYPOLOGY_TYPES.some(t=>t.name===str(r.Property_Typology))).length);
+  $('typology-total').textContent=$('tab-typology-count').textContent;
 }
 
 function fetchText(path) {
@@ -807,12 +1028,12 @@ function applyCSVText(csvText,force=false){
     fillLayoutFilter();fillMixFilter();fillTenantLayoutFilter();
     makeMarkers();
     if(activeTab==='renovation')renderRenovation();
+    if(activeTab==='improvement')renderImprovementClassification();
+    if(activeTab==='typology')renderPropertyTypology();
     if(activeTab==='taxonomy')renderTaxonomy();
     if(activeTab==='tenant')renderTenantMix();
-    if(activeTab==='schedule')renderSchedule();
   }
   paintHeader();
-  $('updated-label').textContent=(changed?'Loaded ':'Checked ')+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   $('error-notice').hidden=true;
 }
 
@@ -820,11 +1041,10 @@ function reportCSVError(error){
   console.error(error);
   const direct=window.location.protocol==='file:';
   const help=direct
-    ? 'Open the CSV using the “Choose CSV” button, or run start_local_server.bat for automatic refresh.'
+    ? 'Use the “Choose CSV” button for direct file mode, or run a local HTTP server as described in README.txt.'
     : 'Ensure DATA/OSJL_183_Stores.csv exists with the exact filename and the site is served over HTTP(S).';
   $('error-notice').innerHTML=`<strong>Unable to read the CSV.</strong> ${escapeHTML(error.message)}<br>${escapeHTML(help)}`;
   $('error-notice').hidden=false;
-  $('updated-label').textContent='CSV read error';
 }
 
 async function reloadData(force=false){
@@ -846,12 +1066,11 @@ async function loadLocalCSV(file){
   if(!file)return;
   try{
     applyCSVText(await file.text(),true);
-    $('updated-label').textContent='Local CSV loaded';
   }catch(e){reportCSVError(e);}
 }
 
 function init(){
-  fillOwnerFilters();fillScheduleSelectors();
+  fillOwnerFilters();
   $('csv-file-button').hidden=window.location.protocol!=='file:';
   $('csv-file-button').addEventListener('click',()=>$('csv-file-input').click());
   $('csv-file-input').addEventListener('change',e=>loadLocalCSV(e.target.files[0]));
@@ -880,13 +1099,36 @@ function init(){
   $('mix-tree').addEventListener('click',jumpToTaxonomyBranch);
   $('mix-expand').addEventListener('click',()=>document.querySelectorAll('#mix-results details').forEach(d=>d.open=true));
   $('mix-collapse').addEventListener('click',()=>document.querySelectorAll('#mix-results details').forEach(d=>d.open=false));
-  for(let i=1;i<=5;i++)$('schedule-group-'+i).addEventListener('change',renderSchedule);
-  $('schedule-search').addEventListener('input',renderSchedule);
-  $('schedule-export').addEventListener('click',exportScheduleCSV);
-  $('reload-button').addEventListener('click',()=>reloadData(true));
+  $('improvement-search').addEventListener('input',renderImprovementClassification);
+  $('improvement-columns').addEventListener('click',event=>{
+    const button=event.target.closest('button[data-record-index]');
+    if(!button)return;
+    openImprovementModal(propertyRows[Number(button.dataset.recordIndex)]);
+  });
+  $('improvement-modal-close').addEventListener('click',()=>closeImprovementModal());
+  $('improvement-modal').addEventListener('click',event=>{
+    if(event.target===$('improvement-modal'))closeImprovementModal();
+  });
+  $('improvement-modal').addEventListener('keydown',event=>{
+    if(event.key!=='Tab')return;
+    const dialog=$('improvement-modal');
+    const focusable=[...dialog.querySelectorAll('button:not([disabled]),a[href],summary,[tabindex="0"]')]
+      .filter(el=>el.getClientRects().length>0);
+    if(!focusable.length)return;
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  });
+  $('typology-zoom-out').addEventListener('click',()=>adjustTypologySize(-1));
+  $('typology-zoom-in').addEventListener('click',()=>adjustTypologySize(1));
+  window.addEventListener('resize',updateTypologySize);
+  updateTypologySize();
+  $('typology-search').addEventListener('input',renderPropertyTypology);
+  $('typology-with').addEventListener('change',renderPropertyTypology);
+  $('typology-without').addEventListener('change',renderPropertyTypology);
   $('lightbox-close').addEventListener('click',closeLightbox);
   $('lightbox').addEventListener('click',e=>{if(e.target===$('lightbox'))closeLightbox();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('lightbox').hidden)closeLightbox();else closeImprovementModal();}});
   ensureMap();reloadData();
   setInterval(()=>{if(!document.hidden)reloadData();},CONFIG.refreshMilliseconds);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)reloadData();});
@@ -894,3 +1136,20 @@ function init(){
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+
+// Brand assets live alongside DATA/ and DIAGRAM/ in the user's LOGO/ folder.
+// If a logo is not yet copied, show a text fallback instead of a broken-image icon.
+function initializeBrandLogos(){
+  for(const [imageSelector,fallbackSelector] of [
+    ['.brand-osjl-logo','.brand-logo-fallback'],
+    ['.brand-arrowstreet-logo','.arrowstreet-logo-fallback']
+  ]){
+    const img=document.querySelector(imageSelector),fallback=document.querySelector(fallbackSelector);
+    if(!img || !fallback)continue;
+    const fail=()=>{img.hidden=true;fallback.hidden=false;};
+    img.addEventListener('error',fail,{once:true});
+    if(img.complete && img.naturalWidth===0)fail();
+  }
+}
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializeBrandLogos);else initializeBrandLogos();
