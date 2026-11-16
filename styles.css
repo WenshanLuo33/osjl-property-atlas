@@ -816,3 +816,58 @@ button:focus-visible,a:focus-visible,summary:focus-visible{
 #page-improvement .classification-column{
   min-height:0;
 }
+
+
+/* 07 — Availability: five columns; pad sites overlap size classes; mixed subgroups. */
+.page-available{min-height:70vh}
+.available-toolbar{display:flex;align-items:center;gap:15px;margin-bottom:16px;padding:13px 16px;background:#fff;border:1px solid var(--line);border-radius:11px}
+.available-toolbar .input-icon-wrap{flex:1 1 280px;max-width:470px}
+.available-visible-count{margin-left:auto;font-size:11px;font-weight:780;color:#90767c;white-space:nowrap}
+.available-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start;min-width:0;overflow-x:auto;padding-bottom:13px}
+.available-column{min-width:0;background:#faf7f8;border:1px solid #eadfe1;border-radius:12px;overflow:hidden}
+.available-column-head{min-height:177px;padding:16px 13px 13px;background:#fff;border-bottom:1px solid #eadfe1}
+.available-column-kicker{display:inline-block;font-size:9px;font-weight:840;letter-spacing:1px;color:#9c7078}
+.available-column-count{float:right;min-width:27px;text-align:center;font-size:12px;font-weight:830;padding:6px 7px;border-radius:7px;background:#f8e9ec;color:#a1253d}
+.available-column-head h3{margin:11px 0 7px;font-size:17px;line-height:1.27;letter-spacing:-.3px;color:#3d2429}
+.available-column-head p{margin:0;font-size:11px;line-height:1.5;color:#8a7479}
+.available-column-mixed .available-column-head{border-top:3px solid #cf566a;padding-top:13px;background:#fffafb}
+.available-column-pad .available-column-head{border-top:3px solid #ad8b8d;padding-top:13px;background:#fffdfd}
+.available-card-stack{padding:10px;display:grid;gap:11px;align-content:start}
+.available-project-card{min-width:0;background:white;border:1px solid #e7dce0;border-radius:10px;overflow:hidden;box-shadow:0 3px 13px #3c1a220b}
+.available-project-card .availability-satellite{height:auto;aspect-ratio:1.55;border:0;border-radius:0;background:#ede6e9}
+.availability-no-map{display:grid;place-items:center;text-align:center;color:#8f8585;padding:18px;font-size:11px}
+.availability-card-body{padding:13px 13px 14px}
+.availability-card-body h4{font-size:16px;line-height:1.35;margin:0 0 10px;font-weight:810;letter-spacing:-.25px;color:#43282d;overflow-wrap:anywhere}
+
+/* Ownership scope visible WITHOUT opening More info. */
+.availability-scope-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+.availability-scope-row>span{font-size:9px;line-height:1.35;font-weight:800;letter-spacing:.55px;color:#927f83}
+.availability-scope-badge{font-size:10px;font-weight:820;line-height:1.35;padding:5px 7px;border-radius:5px;border-left:3px solid #d8546d;background:#f8eef0;color:#793747}
+.availability-scope-entire{border-left-color:#aa1d36;background:#f7e6e9;color:#842d3d}
+.availability-scope-partial{border-left-color:#f19aa9;background:#fff0f3;color:#8c4554}
+.availability-scope-single{border-left-color:#d8546d;background:#fbe9ed;color:#7d384a}
+.availability-scope-undetermined{border-left-color:#bba5ab;background:#f4eff0;color:#807076}
+/* Mixed-size group labels are separate from project card titles. */
+.available-mix-subgroup+.available-mix-subgroup{border-top:1px solid #e4d4d8;margin-top:11px;padding-top:11px}
+.available-mix-subhead{padding:12px 11px 1px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.available-mix-subhead h4{font-size:11px;font-weight:860;line-height:1.4;color:#8b3046;margin:0;letter-spacing:.1px}
+.available-mix-subhead>span{border-radius:5px;background:#f1e2e6;color:#9d4054;font-size:10px;font-weight:830;padding:3px 6px;flex-shrink:0}
+
+.availability-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:13px;border-bottom:1px solid #efe5e7}
+.availability-metrics>div{min-width:0}
+.availability-metrics span,.availability-listed>span,.availability-facts span{display:block;font-size:9px;line-height:1.45;letter-spacing:.65px;font-weight:840;color:#9b8589;margin-bottom:5px}
+.availability-metrics strong{display:block;font-size:14px;color:#5c2635;font-weight:830;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.availability-listed{padding:12px 0;border-bottom:1px solid #efe5e7}
+.availability-listed strong{display:block;font-size:12px;font-weight:760;line-height:1.5;color:#3f3033;overflow-wrap:anywhere}
+.availability-facts{display:grid;gap:10px;padding-top:12px}
+.availability-facts strong{font-size:11px;line-height:1.4;font-weight:730;color:#60444b;display:block;overflow-wrap:anywhere}
+.availability-more>summary{padding:12px 13px}
+.availability-rate-note{margin:0 0 13px;padding:10px 11px;border-left:3px solid #bd5a6a;background:#fbf1f3;border-radius:4px}
+.availability-rate-note strong{font-size:9px;color:#86505b;letter-spacing:.8px}
+.availability-rate-note p{font-size:11px;line-height:1.5;color:#624b50;margin:5px 0 0}
+.available-footnote{font-size:11px;line-height:1.65;color:#8e7479;margin:17px 4px 0;max-width:1100px}
+#page-available .availability-project-card .leaflet-control-zoom{margin:7px 0 0 7px}
+#page-available .availability-project-card .leaflet-control-zoom a{width:22px;height:22px;line-height:22px;font-size:15px}
+@media(max-width:1340px){.available-grid{grid-template-columns:repeat(5,minmax(240px,1fr));gap:10px}.available-card-stack{padding:8px;gap:9px}.available-column-head{padding:13px 11px;min-height:185px}.available-column-head h3{font-size:15px}.availability-card-body{padding:11px}.availability-metrics{gap:5px}.availability-metrics strong{font-size:12px}}
+@media(max-width:860px){.available-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;overflow-x:visible}.available-column-head{min-height:155px}.availability-card-body{padding:13px}.availability-metrics strong{font-size:15px}}
+@media(max-width:550px){.available-grid{grid-template-columns:1fr}.available-column-head{min-height:0}.available-project-card .availability-satellite{aspect-ratio:1.75}.availability-card-body{padding:14px}.availability-metrics strong{font-size:16px}.available-toolbar{flex-wrap:wrap}.available-visible-count{margin-left:0}}

@@ -18,7 +18,7 @@ const DISPLAY_FIELDS=[
   ['Property_Ownership_Type','Ownership type'],['Ownership_Scope','Owned scope'],['Property_Typology','Property typology'],
   ['Tenant_Mix_Type','Tenant mix'],['Retail_Center_Type','Retail center layout'],
   ['OSJL_Type','OSJL location'],['OSJL_Area_SF','OSJL area','sf'],
-  ['Total_GLA_SF','Total GLA','sf'],['Land_Area_Acres','Land area','acres'],
+  ['Total_GLA_SF','Total GLA','sf'],['Available','Available (Q1 2026)'],['Vacant_Rate','Vacant rate (Q1 2026)'],['Land_Area_Acres','Land area','acres'],
   ['Acquisition_Year','Acquisition year'],['Lease_Start_or_Transfer_Year','Lease / transfer year'],
   ['Known_Property_Owner','Property owner'],['Previous_Retail_Use','Previous retail use'],
   ['Space_Availability_Reason','Space availability'],['Renovation','Renovation'],
@@ -28,7 +28,7 @@ const DISPLAY_FIELDS=[
 const PORTFOLIO_FIELDS=[
   ['Tenant_Mix_Type','Tenant mix'],['Retail_Center_Type','Retail center layout'],
   ['OSJL_Area_SF','OSJL area','sf'],['OSJL_Type','OSJL position'],
-  ['Total_GLA_SF','Total GLA','sf'],['Land_Area_Acres','Land area','acres'],
+  ['Total_GLA_SF','Total GLA','sf'],['Available','Available (Q1 2026)'],['Vacant_Rate','Vacant rate (Q1 2026)'],['Land_Area_Acres','Land area','acres'],
   ['Acquisition_Year','Acquisition year'],['Lease_Start_or_Transfer_Year','Lease / transfer year'],
   ['Known_Property_Owner','Known property owner'],['Acquired_Asset_Type','Acquired asset type'],
   ['Previous_Retail_Use','Previous retail use'],['Space_Availability_Reason','Space availability reason'],
@@ -114,11 +114,11 @@ function searchable(row) {return Object.values(row).join(' ').toLocaleLowerCase(
 function labelLocationCount(n) {return n.toLocaleString('en-US');}
 
 function setTab(tab){
-  if(!['map','renovation','improvement','typology','taxonomy','tenant'].includes(tab))return;
+  if(!['map','renovation','improvement','typology','taxonomy','tenant','available'].includes(tab))return;
   if(tab!==activeTab)closeImprovementModal(false);
   if(activeTab!==tab)disposeCardMaps();
   activeTab=tab;
-  for(const name of ['map','renovation','improvement','typology','taxonomy','tenant'])$('page-'+name).hidden=name!==tab;
+  for(const name of ['map','renovation','improvement','typology','taxonomy','tenant','available'])$('page-'+name).hidden=name!==tab;
   document.querySelectorAll('[data-tab]').forEach(btn=>{
     const active=btn.dataset.tab===tab;
     btn.classList.toggle('active',active);
@@ -130,7 +130,7 @@ function setTab(tab){
   if(tab==='typology')renderPropertyTypology();
   if(tab==='taxonomy')renderTaxonomy();
   if(tab==='tenant')renderTenantMix();
-  if(tab==='schedule')renderSchedule();
+  if(tab==='available')renderAvailableSpace();
 }
 function fillOwnerFilters(){
   for(const id of ['reno-owner-filter','tax-owner-filter','mix-owner-filter']){
@@ -514,6 +514,8 @@ function classificationCard(row,serial){
     ['Lease_Start_or_Transfer_Year','Lease / transfer year'],
     ['OSJL_Area_SF','OSJL area','sf'],
     ['Total_GLA_SF','Total GLA','sf'],
+    ['Available','Available (Q1 2026)'],
+    ['Vacant_Rate','Vacant rate (Q1 2026)'],
     ['Land_Area_Acres','Land area','acres'],
     ['Reported_Purchase_Price_USD','Purchase price','usd'],
     ['Known_Property_Owner','Known property owner'],
@@ -585,6 +587,8 @@ function propertyTypologyCard(row,serial){
     ['Lease_Start_or_Transfer_Year','Lease / transfer year'],
     ['OSJL_Area_SF','OSJL area','sf'],
     ['Total_GLA_SF','Total GLA','sf'],
+    ['Available','Available (Q1 2026)'],
+    ['Vacant_Rate','Vacant rate (Q1 2026)'],
     ['Land_Area_Acres','Land area','acres'],
     ['Reported_Purchase_Price_USD','Reported purchase price','usd'],
     ['Known_Property_Owner','Known property owner'],
@@ -850,6 +854,7 @@ function taxonomyProjectCard(row){
   const meta=[
     projectMiniField('OSJL AREA',row.OSJL_Area_SF,'sf'),
     projectMiniField('TOTAL GLA',row.Total_GLA_SF,'sf'),
+    ...(str(row.Available)?[projectMiniField('AVAILABLE · Q1 2026',row.Available),projectMiniField('VACANT RATE · Q1 2026',row.Vacant_Rate||'Not quantifiable')]:[]),
     projectMiniField('OSJL POSITION',row.OSJL_Type),
     projectMiniField('ACQUIRED',row.Acquisition_Year),
     projectMiniField('LEASE / TRANSFER',row.Lease_Start_or_Transfer_Year),
@@ -999,6 +1004,8 @@ function paintHeader(){
   $('improvement-total').textContent=$('tab-improvement-count').textContent;
   $('tab-typology-count').textContent=labelLocationCount(propertyRows.filter(r=>TYPOLOGY_TYPES.some(t=>t.name===str(r.Property_Typology))).length);
   $('typology-total').textContent=$('tab-typology-count').textContent;
+  $('tab-available-count').textContent=labelLocationCount(propertyRows.filter(row=>str(row.Available)).length);
+  $('available-total').textContent=$('tab-available-count').textContent;
 }
 
 function fetchText(path) {
@@ -1032,6 +1039,7 @@ function applyCSVText(csvText,force=false){
     if(activeTab==='typology')renderPropertyTypology();
     if(activeTab==='taxonomy')renderTaxonomy();
     if(activeTab==='tenant')renderTenantMix();
+    if(activeTab==='available')renderAvailableSpace();
   }
   paintHeader();
   $('error-notice').hidden=true;
@@ -1100,6 +1108,7 @@ function init(){
   $('mix-expand').addEventListener('click',()=>document.querySelectorAll('#mix-results details').forEach(d=>d.open=true));
   $('mix-collapse').addEventListener('click',()=>document.querySelectorAll('#mix-results details').forEach(d=>d.open=false));
   $('improvement-search').addEventListener('input',renderImprovementClassification);
+  $('available-search').addEventListener('input',renderAvailableSpace);
   $('improvement-columns').addEventListener('click',event=>{
     const button=event.target.closest('button[data-record-index]');
     if(!button)return;
@@ -1136,6 +1145,196 @@ function init(){
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+
+
+// ===== Q1 2026 Available Space =====
+// In the source listing, a comma/"and" separates offerings, while a range
+// (5,000–15,000 SF) describes ONE potentially configurable offering.
+// Classify by INDIVIDUAL sizes; never label 4 small stores a big-box because
+// their total happens to exceed 30,000 SF.
+const AVAILABLE_GROUPS=[
+  {key:'small',title:'Small Retail',description:'Individual retail offerings up to and including 10,000 SF.'},
+  {key:'medium',title:'Medium Retail',description:'Individual retail offerings over 10,000 SF and up to 30,000 SF.'},
+  {key:'large',title:'Large-Format Retail',description:'Individual retail offerings over 30,000 SF.'},
+  {key:'pad',title:'Pad Sites',description:'Available pad sites, listed separately from the retail suite size. A property may also appear in another column.'},
+  {key:'mixed',title:'Mixed Sizes',description:'Retail offerings spanning more than one size category, grouped below by their size combinations.'}
+];
+const AVAILABLE_SIZE_ORDER=['small','medium','large'];
+const AVAILABLE_MIX_GROUPS=[
+  {key:'small+medium',title:'Small + Medium'},
+  {key:'small+large',title:'Small + Large'},
+  {key:'medium+large',title:'Medium + Large'},
+  {key:'small+medium+large',title:'Small + Medium + Large'}
+];
+function availableSizeForSf(sf){
+  return sf<=10000?'small':sf<=30000?'medium':'large';
+}
+function availableHasPadSite(value){
+  return /\bpad\s+sites?\b/i.test(str(value));
+}
+function availableGroupsForText(value){
+  // Advertised pad acreage is LAND area, not a leasable building area.
+  // Do not treat a pad site as a Small Retail space.
+  let source=str(value).replace(/\b\d+(?:\.\d+)?\s*acres?\b/gi,'');
+  if(!source)return [];
+  const groups=new Set();
+  for(const number of source.match(/\b\d[\d,]*\b/g)||[]){
+    groups.add(availableSizeForSf(Number(number.replaceAll(',',''))));
+  }
+  // One configurable suite may span multiple size classes, e.g.
+  // 10,000–34,084 SF spans Small, Medium AND Large at the chosen thresholds.
+  // In contrast, 'up to 28,399 SF' has no stated minimum: classify by
+  // its advertised maximum only, without inventing a smaller suite.
+  const ranges=/(\d[\d,]*)\s*(?:SF\s*)?(?:-|–|—|\bto\b)\s*(\d[\d,]*)\s*SF\b/gi;
+  let match;
+  while((match=ranges.exec(source))!==null){
+    const low=Number(match[1].replaceAll(',',''));
+    const high=Number(match[2].replaceAll(',',''));
+    const lowIndex=AVAILABLE_SIZE_ORDER.indexOf(availableSizeForSf(Math.min(low,high)));
+    const highIndex=AVAILABLE_SIZE_ORDER.indexOf(availableSizeForSf(Math.max(low,high)));
+    for(let i=lowIndex;i<=highIndex;i++)groups.add(AVAILABLE_SIZE_ORDER[i]);
+  }
+  return AVAILABLE_SIZE_ORDER.filter(type=>groups.has(type));
+}
+function availableGroupForRow(row){
+  const groups=availableGroupsForText(row.Available);
+  if(groups.length>1)return 'mixed';
+  if(groups.length===1)return groups[0];
+  if(availableHasPadSite(row.Available))return 'pad';
+  return 'unclassified';
+}
+function availableMixGroupForRow(row){
+  const groups=availableGroupsForText(row.Available);
+  return groups.length>1?groups.join('+'):'';
+}
+function availabilityScopeSummary(row){
+  const kind=scopeKind(row.Ownership_Scope);
+  const labels={
+    entire:'Entire Owned',partial:'Partial Owned',
+    single:'Single Building / Parcel',undetermined:'Undetermined'
+  };
+  return {kind,label:labels[kind]};
+}
+function availableRateExplanation(row){
+  const raw=str(row.Available);
+  const hasPad=/pad\s+sites?/i.test(raw);
+  const hasRange=/\d[\d,]*\s*(?:SF\s*to|[-–—])\s*\d[\d,]*\s*SF/i.test(raw);
+  const hasUp=/\bup\s*(?:to)?\b/i.test(raw);
+  if(!str(row.Vacant_Rate))return 'No SF area stated; a vacancy percentage cannot be calculated.';
+  if(hasPad && (hasRange||hasUp))return 'Indicative maximum listed retail SF / GLA; pad-site area is excluded.';
+  if(hasPad)return 'Listed SF / GLA; unsized pad-site area is excluded.';
+  if(hasRange||hasUp)return 'Potential upper-bound: listed maximum sizes / GLA, not confirmed leased-vacant floor area.';
+  return 'Sum of separately listed available SF / Total GLA.';
+}
+function availableSpaceCard(row,serial){
+  const article=document.createElement('article');
+  article.className='available-project-card';
+  const loc=displayTitle(row),address=shortAddress(row);
+  const ownershipScope=availabilityScopeSummary(row);
+  const lat=Number(row.Latitude),lng=Number(row.Longitude);
+  const valid=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+  const mapMarkup=valid
+    ? `<div class="card-satellite-map availability-satellite" data-lat="${lat}" data-lng="${lng}" data-zoom="15" role="region" aria-label="Satellite map of ${escapeHTML(loc)}"></div>`
+    : '<div class="availability-satellite availability-no-map">Satellite coordinates unavailable</div>';
+  const fields=[
+    ['Property_Ownership_Type','Ownership type'],
+    ['Ownership_Scope','Ownership scope'],
+    ['Type_of_Space_Available','Space type'],
+    ['Retail_Center_Type','Retail center layout'],
+    ['Tenants','Tenants'],
+    ['OSJL_Type','OSJL location'],
+    ['OSJL_Area_SF','OSJL area','sf'],
+    ['Land_Area_Acres','Land area','acres'],
+    ['Acquisition_Year','Acquisition year'],
+    ['Renovation','Renovation'],
+    ['Previous_Retail_Use','Previous retail use'],
+    ['Space_Availability_Reason','Availability reason'],
+    ['Known_Property_Owner','Known owner'],
+    ['Notes','Notes']
+  ].filter(([key])=>str(row[key]));
+  const body=fields.map(([key,label,kind])=>`<div class="classification-detail-field"><dt>${escapeHTML(label)}</dt><dd>${escapeHTML(formatted(row[key],kind))}</dd></div>`).join('');
+  const sources=[['Acquisition_Source_URL','Acquisition source'],['Secondary_Source_URL','Secondary source']]
+    .filter(([key])=>/^https?:\/\//i.test(str(row[key])))
+    .map(([key,label])=>`<a href="${escapeHTML(row[key])}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join('');
+  article.innerHTML=`${mapMarkup}
+    <div class="availability-card-body">
+      <h4>${escapeHTML(loc)}</h4>
+      <div class="availability-scope-row">
+        <span>OWNERSHIP SCOPE</span>
+        <strong class="availability-scope-badge availability-scope-${escapeHTML(ownershipScope.kind)}">${escapeHTML(ownershipScope.label)}</strong>
+      </div>
+      <div class="availability-metrics">
+        <div><span>TOTAL GLA</span><strong>${escapeHTML(formatted(row.Total_GLA_SF,'sf'))}</strong></div>
+        <div><span>VACANT RATE · Q1 2026</span><strong>${escapeHTML(str(row.Vacant_Rate)||'Not quantifiable')}</strong></div>
+      </div>
+      <div class="availability-listed"><span>AVAILABLE · Q1 2026</span><strong>${escapeHTML(row.Available)}</strong></div>
+      <div class="availability-facts">
+        <div><span>PROPERTY TYPOLOGY</span><strong>${escapeHTML(str(row.Property_Typology)||'Not classified')}</strong></div>
+        <div><span>TENANT MIX TYPES</span><strong>${escapeHTML(str(row.Tenant_Mix_Type)||'Not classified')}</strong></div>
+      </div>
+    </div>
+    <details class="classification-more availability-more">
+      <summary>More info <span aria-hidden="true">⌄</span></summary>
+      <div class="classification-more-body">
+        <div class="classification-full-address"><strong>FULL ADDRESS</strong><span>${escapeHTML(address)}</span></div>
+        <div class="availability-rate-note"><strong>VACANCY CALCULATION</strong><p>${escapeHTML(availableRateExplanation(row))}</p></div>
+        <dl class="classification-detail-list">${body}</dl>
+        <div class="card-media-slot"></div>
+        <div class="classification-links"><a href="${escapeHTML(safeLink(address,row))}" target="_blank" rel="noopener noreferrer">Google Maps ↗</a>${sources}</div>
+      </div>
+    </details>`;
+  const details=article.querySelector('.availability-more');
+  details.addEventListener('toggle',()=>{
+    if(details.open && !details.dataset.mediaRequested){
+      details.dataset.mediaRequested='true';
+      addMediaToCard(article,row,serial).catch(e=>console.warn('Available-space media:',e));
+    }
+  });
+  return article;
+}
+function renderAvailableSpace(){
+  const all=propertyRows.filter(row=>str(row.Available));
+  $('tab-available-count').textContent=labelLocationCount(all.length);
+  $('available-total').textContent=labelLocationCount(all.length);
+  const search=$('available-search').value.trim().toLowerCase();
+  const filtered=all.filter(row=>!search||searchable(row).includes(search));
+  $('available-visible').textContent=`${labelLocationCount(filtered.length)} unique properties shown`;
+  const serial=++renderSerial;
+  disposeCardMaps();
+  const target=$('available-columns');target.replaceChildren();
+  for(const [index,group] of AVAILABLE_GROUPS.entries()){
+    // Pad Sites is an independent, overlapping category. Coventry is shown
+    // in BOTH Small Retail and Pad Sites, never Mixed just because of the pad.
+    const groupRows=filtered.filter(row=>group.key==='pad'
+      ? availableHasPadSite(row.Available)
+      : availableGroupForRow(row)===group.key)
+      .sort((a,b)=>displayTitle(a).localeCompare(displayTitle(b)));
+    const column=document.createElement('section');
+    column.className=`available-column available-column-${group.key}`;
+    column.innerHTML=`<div class="available-column-head"><span class="available-column-kicker">${String(index+1).padStart(2,'0')} / ${group.key==='pad'?'SITE TYPE':group.key==='mixed'?'MIXED SIZES':'RETAIL SIZE'}</span><span class="available-column-count">${groupRows.length}</span><h3>${escapeHTML(group.title)}</h3><p>${escapeHTML(group.description)}</p></div><div class="available-column-content"></div>`;
+    const content=column.querySelector('.available-column-content');
+    if(group.key==='mixed' && groupRows.length){
+      for(const mix of AVAILABLE_MIX_GROUPS){
+        const matches=groupRows.filter(row=>availableMixGroupForRow(row)===mix.key);
+        if(!matches.length)continue;
+        const subsection=document.createElement('section');
+        subsection.className='available-mix-subgroup';
+        subsection.innerHTML=`<div class="available-mix-subhead"><h4>${escapeHTML(mix.title)}</h4><span>${matches.length}</span></div><div class="available-card-stack"></div>`;
+        const stack=subsection.querySelector('.available-card-stack');
+        for(const row of matches)stack.appendChild(availableSpaceCard(row,serial));
+        content.appendChild(subsection);
+      }
+    }else{
+      const stack=document.createElement('div');
+      stack.className='available-card-stack';
+      if(!groupRows.length)stack.innerHTML='<div class="empty-state">No matching projects.</div>';
+      else for(const row of groupRows)stack.appendChild(availableSpaceCard(row,serial));
+      content.appendChild(stack);
+    }
+    target.appendChild(column);
+  }
+  observeCardSatellites('page-available');
+}
 
 // Brand assets live alongside DATA/ and DIAGRAM/ in the user's LOGO/ folder.
 // If a logo is not yet copied, show a text fallback instead of a broken-image icon.

@@ -44,6 +44,7 @@
       <button id="tab-taxonomy" class="tab" role="tab" aria-selected="false" aria-controls="page-taxonomy" type="button" data-tab="taxonomy"><span class="tab-icon">⑂</span> Ownership &amp; Layout Types <span id="tab-tax-count" class="tab-count">—</span></button>
       <button id="tab-tenant" class="tab" role="tab" aria-selected="false" aria-controls="page-tenant" type="button" data-tab="tenant"><span class="tab-icon">⊞</span> Ownership &amp; Tenant Mix <span id="tab-tenant-count" class="tab-count">—</span></button>
 
+      <button id="tab-available" class="tab" role="tab" aria-selected="false" aria-controls="page-available" type="button" data-tab="available"><span class="tab-icon">◻</span> Available Space <span id="tab-available-count" class="tab-count">—</span></button>
       <div class="tab-trailing">Northeast &amp; Mid-Atlantic · Portfolio research</div>
     </div>
 
@@ -410,6 +411,22 @@
         </div>
         <div class="taxonomy-section-head"><div class="section-kicker">PROPERTY COLLECTIONS</div><span id="mix-visible-count" class="tax-visible-count"></span></div>
         <div id="mix-results" class="taxonomy-results"></div>
+      </section>
+      <section id="page-available" class="page page-available" role="tabpanel" aria-labelledby="tab-available" hidden>
+        <div class="page-intro">
+          <div>
+            <div class="section-kicker">07 / SPACE AVAILABILITY · Q1 2026</div>
+            <h2>Available retail space</h2>
+            <p>Q1 2026 available retail suites grouped by individual size: Small (≤10K SF), Medium (>10K–30K SF), and Large (>30K SF). Pad Sites appear in a separate, overlapping column; Mixed Sizes are subdivided by size combination.</p>
+          </div>
+          <div class="intro-number"><strong id="available-total">—</strong><span>PROPERTIES WITH AVAILABILITY</span></div>
+        </div>
+        <div class="available-toolbar">
+          <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="available-search" type="search" placeholder="Search city, property, typology, tenant…" autocomplete="off"></div>
+          <span id="available-visible" class="available-visible-count">—</span>
+        </div>
+        <div class="available-grid" id="available-columns" aria-label="Five availability columns, including separate pad sites and mixed-size subgroups"></div>
+        <p class="available-footnote">Source: Ocean State Job Lot Retail Real Estate Availability, Q1 2026. Vacant rate = listed available SF ÷ total GLA. “≤” indicates a potential maximum based on ranges/“up to”; “≥” excludes pad sites with unspecified SF; “~” marks an upper-range calculation that also excludes an unsized pad site. Pad-site-only listings have no calculable SF-based rate. Properties offering a pad site and a retail suite appear in both relevant columns; column counts therefore may exceed the unique-property total. Mixed Sizes classify retail area only and are subdivided into Small + Medium, Small + Large, Medium + Large, or Small + Medium + Large. These are historical advertised availabilities, not confirmed current vacancies.</p>
       </section>
     </main>
     <footer class="footer">OSJL Property Atlas <span>·</span> All pages use DATA/OSJL_183_Stores.csv <span>·</span> Historical ownership classifications may require deed verification</footer>
