@@ -936,3 +936,16 @@ body.tenant-guide-modal-open{overflow:hidden}
   #page-available #available-columns>.available-column>.available-column-head{position:sticky;top:0;z-index:1000;border-radius:12px 12px 0 0;transition:none;transform:none}
   #page-available .available-column-content{position:relative;z-index:0}
 }
+
+
+/* Residential proximity — shared project-card label, independent of ownership colors. */
+.residential-proximity-badge{
+  display:inline-block;max-width:100%;width:fit-content;min-width:0;
+  background:#e8efed;color:#3e6258;border-radius:5px;
+  font-size:10px;font-weight:720;line-height:1.35;padding:5px 7px;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.location-info .residential-proximity-badge,.card-head .residential-proximity-badge{margin-top:6px}
+#page-typology .typology-summary-tags .residential-proximity-badge{font-size:9px;padding:5px 6px}
+#typology-scroller.typology-zoomed .typology-summary-tags .residential-proximity-badge{font-size:10px;padding:6px 8px}
+.availability-card-body>.residential-proximity-badge{margin:0 0 10px}

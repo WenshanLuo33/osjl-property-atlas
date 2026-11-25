@@ -92,6 +92,20 @@ function csvRows(text) {
   });
 }
 const str = value => String(value??'').trim();
+// Residential-cluster proximity is a qualitative satellite-image classification.
+const RESIDENTIAL_PROXIMITY_LABELS=Object.freeze({
+  near:'Neighborhood-Adjacent Retail',
+  moderate:'Neighborhood-Peripheral Retail',
+  far:'Isolated Retail'
+});
+function residentialProximityLabel(row){
+  const key=str(row.Residential_Cluster_Proximity).toLowerCase();
+  return Object.hasOwn(RESIDENTIAL_PROXIMITY_LABELS,key)?RESIDENTIAL_PROXIMITY_LABELS[key]:'';
+}
+function residentialProximityBadge(row){
+  const label=residentialProximityLabel(row);
+  return label?`<span class="residential-proximity-badge" title="Residential proximity · qualitative satellite imagery assessment">${escapeHTML(label)}</span>`:'';
+}
 const normOwner = value => OWNER_TYPES.some(t=>t.key===str(value)) ? str(value) : 'Unknown';
 const categoryInfo = value => OWNER_TYPES.find(t=>t.key===normOwner(value));
 const readableNum = n => { const a=Number(String(n).replace(/[$,]/g,''));return Number.isFinite(a) ? a.toLocaleString('en-US',{maximumFractionDigits:2}) : str(n); };
@@ -110,7 +124,7 @@ function safeLink(address,row) {
 function shortAddress(row) { return str(row.Street_Address) || [row.City,row.State,row.ZIP_Code].filter(Boolean).join(', '); }
 function displayTitle(row) {return [str(row.City),str(row.State)].filter(Boolean).join(', ') || str(row.Store_ID) || 'Unknown location';}
 function rowId(row) {return str(row.Store_ID)||str(row.Property_Record_ID)||'NO ID';}
-function searchable(row) {return Object.values(row).join(' ').toLocaleLowerCase();}
+function searchable(row) {return [...Object.values(row),residentialProximityLabel(row)].join(' ').toLocaleLowerCase();}
 function labelLocationCount(n) {return n.toLocaleString('en-US');}
 
 function setTab(tab){
@@ -159,7 +173,7 @@ function tooltipHTML(row,withLink=false){
     `<a href="${escapeHTML(str(row[key]))}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join(' · '):'';
   return `<div class="map-tooltip-body"><div class="map-tooltip-title">${escapeHTML(title)}</div>
     <div class="map-tooltip-address">${escapeHTML(address)}</div>
-    <div class="map-tooltip-grid">${details}</div>
+    <div class="map-tooltip-grid">${details}${residentialProximityLabel(row)?`<span>Residential proximity</span><strong>${escapeHTML(residentialProximityLabel(row))}</strong>`:''}</div>
     ${notes}<div class="map-tooltip-footer">${escapeHTML(rowId(row))}${str(row.Property_Record_ID)&&str(row.Property_Record_ID)!==rowId(row)?' · '+escapeHTML(row.Property_Record_ID):''}</div>
     ${sourceLinks?`<div class="map-source-links">${sourceLinks}</div>`:''}
     ${withLink?`<a class="map-popup-btn" target="_blank" rel="noopener noreferrer" href="${escapeHTML(safeLink(address,row))}">Open in Google Maps ↗</a>`:''}</div>`;
@@ -224,7 +238,7 @@ function updateVisibleMarkers(){
   if(!filtered.length){list.innerHTML='<div class="empty-state">No matching properties.</div>';return;}
   list.innerHTML=filtered.map((row,i)=>`<button class="location-row" data-idx="${i}" type="button">
     <span class="location-dot${normOwner(row.Property_Ownership_Type)==='Owned + No OSJL Store'?' diamond':''}" style="background:${rowColor(row)}"></span>
-    <span class="location-info"><strong>${escapeHTML(displayTitle(row))}</strong><small>${escapeHTML(shortAddress(row))}</small></span>
+    <span class="location-info"><strong>${escapeHTML(displayTitle(row))}</strong><small>${escapeHTML(shortAddress(row))}</small>${residentialProximityBadge(row)}</span>
     <span class="location-chevron">›</span></button>`).join('');
   list.querySelectorAll('[data-idx]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=filtered[Number(btn.dataset.idx)],match=markers.find(m=>m.row===row);
@@ -261,7 +275,7 @@ function propertyCard(row,type){
   const sources=[['Acquisition_Source_URL','Acquisition source'],['Secondary_Source_URL','Secondary source']]
     .filter(([key])=>/^https?:\/\//i.test(str(row[key]))).map(([key,label])=>`<a href="${escapeHTML(row[key])}" target="_blank" rel="noopener noreferrer">${escapeHTML(label)} ↗</a>`).join('');
   section.innerHTML=`<div class="card-head"><div class="card-topline"><span class="card-id">${escapeHTML(rowId(row))}</span>${ownerBadge(row)}</div>
-    <h4>${escapeHTML(displayTitle(row))}</h4><div class="card-address">${escapeHTML(addr)}</div></div>
+    <h4>${escapeHTML(displayTitle(row))}</h4><div class="card-address">${escapeHTML(addr)}</div>${residentialProximityBadge(row)}</div>
     <div class="reno-highlight"><span class="field-label">RENOVATION</span>${escapeHTML(str(row.Renovation))}</div>
     <div class="card-fields">${values}</div><div class="card-media-slot"></div>${satelliteMarkup}
     <div class="card-footer"><a href="${escapeHTML(mapURL)}" target="_blank" rel="noopener noreferrer">Google Maps ↗</a>${sources}</div>`;
@@ -498,7 +512,8 @@ function classificationCard(row,serial){
   const tags=[
     ...categories.map(t=>classificationChip(t.label,'improvement')),
     str(row.Tenant_Mix_Type)?classificationChip(row.Tenant_Mix_Type,'mix'):'',
-    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):''
+    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):'',
+    residentialProximityBadge(row)
   ].join('');
   const lat=Number(row.Latitude),lng=Number(row.Longitude);
   const valid=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
@@ -563,12 +578,13 @@ function propertyTypologyCard(row,serial){
   card.className='classification-project-card typology-project-card';
   const location=displayTitle(row),address=shortAddress(row);
   const categories=improvementTypesForRow(row);
-  // Only three kinds of summary chips: improvement types, tenant mix, ownership scope.
+  // Summary chips: improvement types, tenant mix, ownership scope, residential proximity.
   // Omit a kind when the CSV provides no value; never invent a classification.
   const chips=[
     ...categories.map(item=>classificationChip(item.label,'improvement')),
     str(row.Tenant_Mix_Type)?classificationChip(row.Tenant_Mix_Type,'mix'):'',
-    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):''
+    str(row.Ownership_Scope)?classificationChip(row.Ownership_Scope,'scope'):'',
+    residentialProximityBadge(row)
   ].filter(Boolean).join('');
   const lat=Number(row.Latitude),lng=Number(row.Longitude);
   const hasCoords=str(row.Latitude)&&str(row.Longitude)&&Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
@@ -883,7 +899,7 @@ function taxonomyProjectCard(row){
   return `<article class="taxonomy-project-card">
     <div class="tax-project-top"><span class="tax-project-id">${escapeHTML(id)}</span><span class="tax-project-location">${escapeHTML(str(row.State))}</span></div>
     <h4>${escapeHTML(title)}</h4><div class="tax-project-address">${escapeHTML(addr)}</div>
-    <div class="tax-card-tags">${ownerBadge(row)}${mix?`<span class="tax-mix-badge">${escapeHTML(mix)}</span>`:''}</div>
+    <div class="tax-card-tags">${ownerBadge(row)}${mix?`<span class="tax-mix-badge">${escapeHTML(mix)}</span>`:''}${residentialProximityBadge(row)}</div>
     <div class="taxonomy-mini-fields">${meta}</div>
     ${str(row.Tenants)?`<div class="tax-project-tenants"><strong>TENANTS</strong><span>${escapeHTML(row.Tenants)}</span></div>`:''}
     <details class="tax-extra-details"><summary>More property information</summary><dl>${moreFields}</dl></details>
@@ -1365,6 +1381,7 @@ function availableSpaceCard(row,serial){
   article.innerHTML=`${mapMarkup}
     <div class="availability-card-body">
       <h4>${escapeHTML(loc)}</h4>
+      ${residentialProximityBadge(row)}
       <div class="availability-scope-row">
         <span>OWNERSHIP SCOPE</span>
         <strong class="availability-scope-badge availability-scope-${escapeHTML(ownershipScope.kind)}">${escapeHTML(ownershipScope.label)}</strong>
