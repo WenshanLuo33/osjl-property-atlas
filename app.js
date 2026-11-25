@@ -94,9 +94,9 @@ function csvRows(text) {
 const str = value => String(value??'').trim();
 // Residential-cluster proximity is a qualitative satellite-image classification.
 const RESIDENTIAL_PROXIMITY_LABELS=Object.freeze({
-  near:'Neighborhood-Adjacent Retail',
-  moderate:'Neighborhood-Peripheral Retail',
-  far:'Isolated Retail'
+  near:'Near Residential Clusters',
+  moderate:'Moderate Distance from Residential Clusters',
+  far:'Far from Residential Clusters'
 });
 function residentialProximityLabel(row){
   const key=str(row.Residential_Cluster_Proximity).toLowerCase();
