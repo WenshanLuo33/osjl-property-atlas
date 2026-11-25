@@ -871,3 +871,39 @@ button:focus-visible,a:focus-visible,summary:focus-visible{
 @media(max-width:1340px){.available-grid{grid-template-columns:repeat(5,minmax(240px,1fr));gap:10px}.available-card-stack{padding:8px;gap:9px}.available-column-head{padding:13px 11px;min-height:185px}.available-column-head h3{font-size:15px}.availability-card-body{padding:11px}.availability-metrics{gap:5px}.availability-metrics strong{font-size:12px}}
 @media(max-width:860px){.available-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;overflow-x:visible}.available-column-head{min-height:155px}.availability-card-body{padding:13px}.availability-metrics strong{font-size:15px}}
 @media(max-width:550px){.available-grid{grid-template-columns:1fr}.available-column-head{min-height:0}.available-project-card .availability-satellite{aspect-ratio:1.75}.availability-card-body{padding:14px}.availability-metrics strong{font-size:16px}.available-toolbar{flex-wrap:wrap}.available-visible-count{margin-left:0}}
+
+
+/* Tenant Mix reference: clickable guide cards and portfolio-wide collection modal. */
+.tenant-guide-card{cursor:pointer}
+.tenant-guide-card .card-satellite-map{cursor:grab}
+.tenant-guide-card .card-satellite-map.leaflet-dragging{cursor:grabbing}
+.tenant-guide-card:focus-within{border-color:#cf8996;box-shadow:0 0 0 2px #f7e0e5}
+.tenant-guide-open{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:7px 12px;width:100%;text-align:left;border:0;background:transparent;padding:0;color:var(--accent-dark)}
+.tenant-guide-open-label{font-size:10px;font-weight:800;white-space:nowrap}
+.tenant-guide-card:hover .tenant-guide-open-label,.tenant-guide-open:focus-visible .tenant-guide-open-label{text-decoration:underline}
+body.tenant-guide-modal-open{overflow:hidden}
+.tenant-guide-modal{position:fixed;inset:0;margin:auto;width:min(1120px,calc(100% - 48px));max-width:none;height:min(88vh,1000px);max-height:calc(100% - 32px);padding:0;border:1px solid #eadfe1;border-radius:15px;background:#faf7f7;color:var(--ink);box-shadow:0 25px 85px #0005;overflow:hidden}
+.tenant-guide-modal[open]{display:flex;flex-direction:column}
+.tenant-guide-modal::backdrop{background:rgba(37,16,23,.76)}
+.tenant-guide-modal-header{display:flex;align-items:center;gap:20px;padding:19px 23px;background:#fff7f8;border-bottom:1px solid #eedcdf;flex:0 0 auto}
+.tenant-guide-modal-titleblock{flex:1;min-width:0}
+.tenant-guide-modal-titleblock .section-kicker{margin-bottom:5px}
+.tenant-guide-modal-header h2{font-size:23px;line-height:1.2;letter-spacing:-.4px;margin:0;overflow-wrap:anywhere}
+.tenant-guide-modal-subtitle{font-size:11px;color:var(--muted);margin-top:7px}
+.tenant-guide-modal-stat{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.tenant-guide-modal-stat strong{font-size:28px;line-height:1;color:var(--accent-dark);font-weight:820;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+.tenant-guide-modal-stat span{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.8px}
+.tenant-guide-modal-content{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.tenant-guide-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:16px;padding:20px}
+.tenant-guide-modal-grid>.empty-state{grid-column:1/-1}
+.tenant-guide-modal-grid .taxonomy-project-card .card-satellite-map{height:250px}
+.tenant-modal-map-fallback{display:grid;place-items:center;font-size:11px;color:var(--muted)}
+@media(max-width:700px){
+  .tenant-guide-modal{width:calc(100% - 18px);height:94vh;max-height:calc(100% - 18px);border-radius:11px}
+  .tenant-guide-modal-header{padding:13px 12px;gap:9px;flex-wrap:wrap}
+  .tenant-guide-modal-header h2{font-size:18px}
+  .tenant-guide-modal-stat strong{font-size:22px}
+  .tenant-guide-modal-stat span{font-size:8px;letter-spacing:0}
+  .tenant-guide-modal-grid{grid-template-columns:1fr;padding:10px;gap:12px}
+  .tenant-guide-modal-grid .taxonomy-project-card .card-satellite-map{height:220px}
+}

@@ -115,7 +115,7 @@ function labelLocationCount(n) {return n.toLocaleString('en-US');}
 
 function setTab(tab){
   if(!['map','renovation','improvement','typology','taxonomy','tenant','available'].includes(tab))return;
-  if(tab!==activeTab)closeImprovementModal(false);
+  if(tab!==activeTab){closeImprovementModal(false);closeTenantGuideModal(false);}
   if(activeTab!==tab)disposeCardMaps();
   activeTab=tab;
   for(const name of ['map','renovation','improvement','typology','taxonomy','tenant','available'])$('page-'+name).hidden=name!==tab;
@@ -363,7 +363,7 @@ function disposeCardMaps() {
   cardMaps=[];
   document.querySelectorAll('.card-satellite-map[data-map-loaded]').forEach(el=>delete el.dataset.mapLoaded);
 }
-function mountCardSatellite(element) {
+function mountCardSatellite(element,collection=cardMaps) {
   if(!element.isConnected || element.dataset.mapLoaded==='true' || typeof L==='undefined')return;
   const lat=Number(element.dataset.lat),lng=Number(element.dataset.lng);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)return;
@@ -377,8 +377,9 @@ function mountCardSatellite(element) {
     maxZoom:19,attribution:'Imagery © Esri and contributors'
   }).addTo(instance);
   L.circleMarker([lat,lng],{radius:6,color:'#fff',weight:2.5,fillColor:'#c82c44',fillOpacity:1,interactive:false}).addTo(instance);
-  element.dataset.mapLoaded='true';cardMaps.push(instance);
+  element.dataset.mapLoaded='true';collection.push(instance);
   requestAnimationFrame(()=>{if(element.isConnected)instance.invalidateSize();});
+  return instance;
 }
 function observeCardSatellites(pageId) {
   const elements=[...document.querySelectorAll(`#${pageId} .card-satellite-map`)];
@@ -978,6 +979,86 @@ function populateTenantGuideMaps(){
   }
 }
 
+// Tenant guide: one portfolio-wide modal per category, independent of the
+// ownership tree filters. Its lazy satellite maps have a separate lifecycle.
+let tenantGuideModalType=null,tenantGuideReturnFocus=null;
+let tenantGuideModalObserver=null,tenantGuideModalMaps=[];
+function disposeTenantGuideModalMaps(){
+  if(tenantGuideModalObserver){tenantGuideModalObserver.disconnect();tenantGuideModalObserver=null;}
+  tenantGuideModalMaps.forEach(instance=>instance.remove());
+  tenantGuideModalMaps=[];
+}
+function renderTenantGuideModal(){
+  const dialog=$('tenant-guide-modal');
+  if(!dialog.open || tenantGuideModalType===null)return;
+  const content=$('tenant-guide-modal-content');
+  const previousScroll=content.scrollTop;
+  disposeTenantGuideModalMaps();
+  const rows=propertyRows.filter(row=>str(row.Tenant_Mix_Type)===tenantGuideModalType)
+    .sort((a,b)=>displayTitle(a).localeCompare(displayTitle(b))||shortAddress(a).localeCompare(shortAddress(b))||rowId(a).localeCompare(rowId(b)));
+  $('tenant-guide-modal-title').textContent=tenantGuideModalType;
+  $('tenant-guide-modal-count').textContent=`${labelLocationCount(rows.length)} / ${labelLocationCount(propertyRows.length)}`;
+  $('tenant-guide-modal-count-label').textContent='PROPERTIES IN PORTFOLIO';
+  const grid=$('tenant-guide-modal-grid');
+  grid.innerHTML=rows.length?rows.map(taxonomyProjectCard).join(''):'<div class="empty-state">No properties in this category.</div>';
+  content.scrollTop=previousScroll;
+  const elements=[...grid.querySelectorAll('.card-satellite-map')];
+  if(typeof L==='undefined'){
+    elements.forEach(el=>{el.textContent='Satellite map unavailable.';el.classList.add('tenant-modal-map-fallback');});
+    return;
+  }
+  if('IntersectionObserver' in window){
+    tenantGuideModalObserver=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        if(!entry.isIntersecting||!dialog.open||!entry.target.isConnected)continue;
+        mountCardSatellite(entry.target,tenantGuideModalMaps);
+        tenantGuideModalObserver?.unobserve(entry.target);
+      }
+    },{root:content,rootMargin:'240px 0px',threshold:0.01});
+    elements.forEach(el=>tenantGuideModalObserver.observe(el));
+  }else elements.forEach(el=>mountCardSatellite(el,tenantGuideModalMaps));
+}
+function openTenantGuideModal(type,trigger){
+  if(!MIX_ORDER.includes(type))return;
+  const dialog=$('tenant-guide-modal');
+  if(dialog.open)return;
+  tenantGuideModalType=type;
+  tenantGuideReturnFocus=trigger;
+  $('tenant-guide-modal-content').scrollTop=0;
+  dialog.showModal();
+  document.body.classList.add('tenant-guide-modal-open');
+  renderTenantGuideModal();
+  $('tenant-guide-modal-content').scrollTop=0;
+  $('tenant-guide-modal-close').focus();
+}
+function closeTenantGuideModal(restoreFocus=true){
+  const dialog=$('tenant-guide-modal');
+  if(!dialog||!dialog.open)return;
+  dialog.close();
+  disposeTenantGuideModalMaps();
+  $('tenant-guide-modal-grid').replaceChildren();
+  document.body.classList.remove('tenant-guide-modal-open');
+  tenantGuideModalType=null;
+  if(restoreFocus&&tenantGuideReturnFocus?.isConnected)tenantGuideReturnFocus.focus({preventScroll:true});
+  tenantGuideReturnFocus=null;
+}
+function initTenantGuideModal(){
+  const dialog=$('tenant-guide-modal');
+  $('tenant-guide-cards').addEventListener('click',event=>{
+    const card=event.target.closest('.tenant-guide-card[data-tenant-type]');
+    // Keep the original map pan/zoom and Google Maps links independent.
+    if(!card||event.target.closest('.card-satellite-map,a'))return;
+    openTenantGuideModal(card.dataset.tenantType,card.querySelector('.tenant-guide-open'));
+  });
+  $('tenant-guide-modal-close').addEventListener('click',()=>closeTenantGuideModal());
+  dialog.addEventListener('cancel',event=>{event.preventDefault();closeTenantGuideModal();});
+  dialog.addEventListener('click',event=>{
+    if(event.target!==dialog)return;
+    const rect=dialog.getBoundingClientRect();
+    if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeTenantGuideModal();
+  });
+}
+
 function renderTenantMix(){renderTaxonomyView('tenant');}
 function jumpToTaxonomyBranch(event) {
   const button=event.target.closest('[data-jump]');if(!button)return;
@@ -1038,7 +1119,7 @@ function applyCSVText(csvText,force=false){
     if(activeTab==='improvement')renderImprovementClassification();
     if(activeTab==='typology')renderPropertyTypology();
     if(activeTab==='taxonomy')renderTaxonomy();
-    if(activeTab==='tenant')renderTenantMix();
+    if(activeTab==='tenant'){renderTenantMix();renderTenantGuideModal();}
     if(activeTab==='available')renderAvailableSpace();
   }
   paintHeader();
@@ -1100,6 +1181,7 @@ function init(){
   $('taxonomy-tree').addEventListener('click',jumpToTaxonomyBranch);
   $('tax-expand').addEventListener('click',()=>document.querySelectorAll('#taxonomy-results details').forEach(d=>d.open=true));
   $('tax-collapse').addEventListener('click',()=>document.querySelectorAll('#taxonomy-results details').forEach(d=>d.open=false));
+  initTenantGuideModal();
   $('mix-search').addEventListener('input',renderTenantMix);
   $('mix-owner-filter').addEventListener('change',renderTenantMix);
   $('mix-type-filter').addEventListener('change',renderTenantMix);
@@ -1137,7 +1219,7 @@ function init(){
   $('typology-without').addEventListener('change',renderPropertyTypology);
   $('lightbox-close').addEventListener('click',closeLightbox);
   $('lightbox').addEventListener('click',e=>{if(e.target===$('lightbox'))closeLightbox();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('lightbox').hidden)closeLightbox();else closeImprovementModal();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('lightbox').hidden)closeLightbox();else if(!$('tenant-guide-modal').open)closeImprovementModal();}});
   ensureMap();reloadData();
   setInterval(()=>{if(!document.hidden)reloadData();},CONFIG.refreshMilliseconds);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)reloadData();});

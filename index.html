@@ -201,7 +201,7 @@
           <div>
             <div class="section-kicker">06 / TENANT MIX TAXONOMY</div>
             <h2>Ownership → Tenant mix types</h2>
-            <p>Compare the tenant mix across owned and leased properties. Select a category to jump to its property cards, satellite map, and portfolio details.</p>
+            <p>Compare the tenant mix across owned and leased properties. Select a classification card to view all its properties, or use the ownership tree below to explore individual groups.</p>
           </div>
           <div class="intro-number"><strong id="mix-total">—</strong><span>PROPERTIES IN DATA</span></div>
         </div>
@@ -211,7 +211,7 @@
             <div>
               <div class="section-kicker">REFERENCE / CLASSIFICATION DEFINITIONS</div>
               <h3 id="tenant-guide-title">Tenant Mix Classification <span>10 Types</span></h3>
-              <p>Functional groupings of OSJL and neighboring tenants. Each example shows an interactive satellite map from the unified CSV.</p>
+              <p>Functional groupings of OSJL and neighboring tenants. Click any classification card to view all matching properties. Example satellite maps remain interactive.</p>
             </div>
           </div>
           <div class="tenant-guide-cards" id="tenant-guide-cards">
@@ -224,7 +224,7 @@
                 <p class="tenant-guide-card-definition">Only OSJL is listed as a tenant.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL Only"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -242,7 +242,7 @@
                 <p class="tenant-guide-card-definition">OSJL paired with automotive repair, tire services, or auto-parts retailers.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Town Fair Tire</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Automotive"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -260,7 +260,7 @@
                 <p class="tenant-guide-card-definition">OSJL paired with discount, hardware, household, or other practical-goods retailers; includes primarily big-box retail clusters.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Harbor Freight + Dollar Tree</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Utility Retail"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -278,7 +278,7 @@
                 <p class="tenant-guide-card-definition">OSJL paired with a gym, fitness studio, or sports-training facility.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Planet Fitness</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Fitness"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -296,7 +296,7 @@
                 <p class="tenant-guide-card-definition">OSJL paired with quick-service food, coffee, convenience retail, or other frequent everyday stops.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + McDonald’s + Dunkin’</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Convenience"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -314,7 +314,7 @@
                 <p class="tenant-guide-card-definition">OSJL paired with medical clinics, rehabilitation, or healthcare facilities.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Medical Clinic</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Healthcare"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -332,7 +332,7 @@
                 <p class="tenant-guide-card-definition">OSJL with multiple practical services such as automotive, fitness, healthcare, and everyday-service businesses, without a dominant leisure focus.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Auto Services + Fitness + Healthcare</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: OSJL + Mixed Services"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -350,7 +350,7 @@
                 <p class="tenant-guide-card-definition">A grocery store is a primary anchor alongside OSJL and other retail or service uses.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Supermarket + Retail</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: Grocery-Anchored Retail"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -368,7 +368,7 @@
                 <p class="tenant-guide-card-definition">Retail together with a broader range of dining, leisure, entertainment, or experience-oriented uses.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>OSJL + Restaurants + Entertainment + Services</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: Retail, Services &amp; Experiences"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -386,7 +386,7 @@
                 <p class="tenant-guide-card-definition">A documented tenant arrangement that does not fit the other nine categories.</p>
                 <div class="tenant-guide-card-bottom">
                   <div class="tenant-guide-typical"><span>TYPICAL TENANT COMBINATION</span><strong>Special or nonstandard property use</strong></div>
-                  <span class="tenant-guide-type-count" data-guide-count>—</span>
+                  <button type="button" class="tenant-guide-open" aria-haspopup="dialog" aria-controls="tenant-guide-modal" aria-label="View all properties: Other"><span class="tenant-guide-type-count" data-guide-count>—</span><span class="tenant-guide-open-label">View all properties <span aria-hidden="true">↗</span></span></button>
                 </div>
               </div>
               <div class="tenant-guide-card-map">
@@ -440,6 +440,14 @@
       <div id="improvement-modal-content" class="improvement-modal-content"></div>
     </div>
   </div>
+  <dialog id="tenant-guide-modal" class="tenant-guide-modal" aria-labelledby="tenant-guide-modal-title" aria-describedby="tenant-guide-modal-count tenant-guide-modal-count-label">
+    <header class="tenant-guide-modal-header">
+      <div class="tenant-guide-modal-titleblock"><div class="section-kicker">TENANT MIX / PROPERTY COLLECTION</div><h2 id="tenant-guide-modal-title">Tenant mix</h2><div class="tenant-guide-modal-subtitle">All ownership types · Entire portfolio</div></div>
+      <div class="tenant-guide-modal-stat"><strong id="tenant-guide-modal-count">—</strong><span id="tenant-guide-modal-count-label">PROPERTIES IN PORTFOLIO</span></div>
+      <button id="tenant-guide-modal-close" class="improvement-modal-close" type="button" aria-label="Close tenant mix properties" autofocus>×</button>
+    </header>
+    <div id="tenant-guide-modal-content" class="tenant-guide-modal-content"><div id="tenant-guide-modal-grid" class="taxonomy-card-grid tenant-guide-modal-grid"></div></div>
+  </dialog>
   <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image preview"><button id="lightbox-close" class="lightbox-close" type="button" aria-label="Close preview">×</button><img id="lightbox-img" alt="Enlarged property image"><div id="lightbox-caption" class="lightbox-caption"></div></div>
 </body>
 </html>
