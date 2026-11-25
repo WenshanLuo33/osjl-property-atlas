@@ -165,9 +165,10 @@
             <button type="button" id="typology-zoom-in" class="typology-size-button" aria-label="Make typology columns wider">+</button>
           </div>
         </div>
-        <div id="typology-scroller" class="eight-column-scroller" tabindex="0" aria-label="Eight property typology columns, adjustable width and horizontal scrolling">
-          <div class="ownership-groups eight-column-grid" aria-hidden="true"><div class="ownership-group entire-owned">ENTIRE OWNED · TYPES 01–05</div><div class="ownership-group partial-owned">PARTIAL OWNED · TYPES 06–08</div></div>
-          <div class="eight-column-grid" id="typology-columns"></div>
+        <div id="typology-scroller" class="freeze-workspace">
+          <div id="typology-ownership-viewport" class="freeze-horizontal-viewport"><div class="ownership-groups eight-column-grid" aria-hidden="true"><div class="ownership-group entire-owned">ENTIRE OWNED · TYPES 01–05</div><div class="ownership-group partial-owned">PARTIAL OWNED · TYPES 06–08</div></div></div>
+          <div class="freeze-sticky-row"><div id="typology-header-viewport" class="freeze-horizontal-viewport"><div class="eight-column-grid" id="typology-frozen-columns"></div></div></div>
+          <div id="typology-scroll-body" class="eight-column-scroller" tabindex="0" aria-label="Eight property typology columns, adjustable width and horizontal scrolling"><div class="eight-column-grid" id="typology-columns"></div></div>
         </div>
         <p class="classification-note">Ownership grouping follows the eight-type framework. Site diagrams are stored in the sibling <code>DIAGRAM/</code> folder. Satellite pins indicate property locations, not legal parcel boundaries.</p>
       </section>
@@ -425,7 +426,10 @@
           <div class="input-icon-wrap"><span aria-hidden="true">⌕</span><input id="available-search" type="search" placeholder="Search city, property, typology, tenant…" autocomplete="off"></div>
           <span id="available-visible" class="available-visible-count">—</span>
         </div>
-        <div class="available-grid" id="available-columns" aria-label="Five availability columns, including separate pad sites and mixed-size subgroups"></div>
+        <div id="available-freeze-workspace" class="freeze-workspace">
+          <div class="freeze-sticky-row available-sticky-row" aria-hidden="true"><div id="available-header-viewport" class="freeze-horizontal-viewport"><div id="available-frozen-columns" class="available-grid"></div></div></div>
+          <div class="available-grid" id="available-columns" aria-label="Five availability columns, including separate pad sites and mixed-size subgroups"></div>
+        </div>
         <p class="available-footnote">Source: Ocean State Job Lot Retail Real Estate Availability, Q1 2026. Vacant rate = listed available SF ÷ total GLA. “≤” indicates a potential maximum based on ranges/“up to”; “≥” excludes pad sites with unspecified SF; “~” marks an upper-range calculation that also excludes an unsized pad site. Pad-site-only listings have no calculable SF-based rate. Properties offering a pad site and a retail suite appear in both relevant columns; column counts therefore may exceed the unique-property total. Mixed Sizes classify retail area only and are subdivided into Small + Medium, Small + Large, Medium + Large, or Small + Medium + Large. These are historical advertised availabilities, not confirmed current vacancies.</p>
       </section>
     </main>

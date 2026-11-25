@@ -127,7 +127,7 @@ function setTab(tab){
   if(tab==='map'&&map)setTimeout(()=>map.invalidateSize(),50);
   if(tab==='renovation')renderRenovation();
   if(tab==='improvement')renderImprovementClassification();
-  if(tab==='typology')renderPropertyTypology();
+  if(tab==='typology'){updateTypologySize();renderPropertyTypology();}
   if(tab==='taxonomy')renderTaxonomy();
   if(tab==='tenant')renderTenantMix();
   if(tab==='available')renderAvailableSpace();
@@ -735,6 +735,7 @@ function updateTypologySize(){
   $('typology-zoom-label').textContent=typologySizeStep===0?'Fit all 8':`${Math.round(scale*100)}%`;
   $('typology-zoom-out').disabled=typologySizeStep===0;
   $('typology-zoom-in').disabled=typologySizeStep===TYPOLOGY_SCALES.length-1;
+  syncFrozenHeaderX();
   // Satellite tiles need to update after a column resizes.
   requestAnimationFrame(()=>cardMaps.forEach(m=>{if(m.getContainer().isConnected)m.invalidateSize();}));
 }
@@ -754,6 +755,7 @@ function renderPropertyTypology(){
   const serial=++renderSerial;
   disposeCardMaps();
   const target=$('typology-columns');target.replaceChildren();
+  const frozen=$('typology-frozen-columns');frozen.replaceChildren();
   // Every column occupies the same eight CSS subgrid rows.  This keeps the
   // description baseline, improvement methods, With/Without headers and the
   // right-aligned counts perfectly level across all eight typologies, even
@@ -765,12 +767,14 @@ function renderPropertyTypology(){
     const column=document.createElement('section');
     column.className='classification-column typology-aligned-column '+(index<5?'owned-entire':'owned-partial');
     column.innerHTML=`
+      <div class="typology-freeze-head">
       <div class="typology-aligned-title">
         <div class="typology-aligned-titleline"><span class="classification-column-number">${String(index+1).padStart(2,'0')}</span>
           <span class="classification-column-count">${rows.length} ${rows.length===1?'property':'properties'}</span></div>
         <h3>${escapeHTML(type.name)}</h3>
       </div>
       ${diagramMarkup(type.diagram,type.name)}
+      </div>
       <p class="typology-aligned-description">${escapeHTML(type.description)}</p>
       <div class="typology-methods">
         <div class="typology-methods-label">IMPROVEMENT METHODS</div>
@@ -782,9 +786,14 @@ function renderPropertyTypology(){
       <div class="typology-aligned-projects typology-projects-without" ${withoutImprovement?'':'hidden'}></div>`;
     if(withImprovement)addClassificationCards(column.querySelector('.typology-projects-with'),improved,serial,propertyTypologyCard);
     if(withoutImprovement)addClassificationCards(column.querySelector('.typology-projects-without'),unimproved,serial,propertyTypologyCard);
+    const headerColumn=document.createElement('section');
+    headerColumn.className=column.className+' typology-frozen-column';
+    headerColumn.appendChild(column.querySelector('.typology-freeze-head'));
+    frozen.appendChild(headerColumn);
     target.appendChild(column);
   });
   observeCardSatellites('page-typology');
+  syncFrozenHeaderX();
 }
 
 // ===== Ownership → layout hierarchy, derived entirely from the unified CSV =====
@@ -1158,7 +1167,22 @@ async function loadLocalCSV(file){
   }catch(e){reportCSVError(e);}
 }
 
+
+// Native sticky header rows: only horizontal scroll positions are synchronized.
+function syncFrozenHeaderX(){
+  const x=$('typology-scroll-body').scrollLeft;
+  $('typology-header-viewport').scrollLeft=x;
+  $('typology-ownership-viewport').scrollLeft=x;
+  $('available-header-viewport').scrollLeft=$('available-columns').scrollLeft;
+}
+function initFrozenHeaders(){
+  $('typology-scroll-body').addEventListener('scroll',syncFrozenHeaderX,{passive:true});
+  $('available-columns').addEventListener('scroll',syncFrozenHeaderX,{passive:true});
+  window.addEventListener('resize',syncFrozenHeaderX,{passive:true});
+}
+
 function init(){
+  initFrozenHeaders();
   fillOwnerFilters();
   $('csv-file-button').hidden=window.location.protocol!=='file:';
   $('csv-file-button').addEventListener('click',()=>$('csv-file-input').click());
@@ -1384,6 +1408,7 @@ function renderAvailableSpace(){
   const serial=++renderSerial;
   disposeCardMaps();
   const target=$('available-columns');target.replaceChildren();
+  const frozen=$('available-frozen-columns');frozen.replaceChildren();
   for(const [index,group] of AVAILABLE_GROUPS.entries()){
     // Pad Sites is an independent, overlapping category. Coventry is shown
     // in BOTH Small Retail and Pad Sites, never Mixed just because of the pad.
@@ -1413,9 +1438,15 @@ function renderAvailableSpace(){
       else for(const row of groupRows)stack.appendChild(availableSpaceCard(row,serial));
       content.appendChild(stack);
     }
+    // Desktop uses the shared sticky row; mobile retains the original headers.
+    const headerColumn=document.createElement('section');
+    headerColumn.className=column.className+' available-frozen-column';
+    headerColumn.appendChild(column.querySelector('.available-column-head').cloneNode(true));
+    frozen.appendChild(headerColumn);
     target.appendChild(column);
   }
   observeCardSatellites('page-available');
+  syncFrozenHeaderX();
 }
 
 // Brand assets live alongside DATA/ and DIAGRAM/ in the user's LOGO/ folder.
